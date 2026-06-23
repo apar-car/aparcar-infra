@@ -1,4 +1,3 @@
-# Terraform
 .terraform/
 *.tfstate
 *.tfstate.backup
@@ -6,13 +5,9 @@
 .terraform.lock.hcl
 *.tfvars
 *.tfvars.json
-
-# Credentials
 *.pem
 *.key
 .env
 .env.*
-
-# OS
 .DS_Store
 Thumbs.db
