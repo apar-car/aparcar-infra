@@ -9,6 +9,5 @@ terraform {
 }
 
 provider "aws" {
-  region  = "eu-west-1"
-  profile = "aparcar-dev"
+  region = "eu-west-1"
 }
