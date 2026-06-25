@@ -189,7 +189,7 @@ resource "aws_default_security_group" "main" {
 
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aparcar/${var.environment}/vpc-flow-logs"
-  retention_in_days = 30
+  retention_in_days = 365
 
   tags = {
     Name        = "${var.project}-${var.environment}-vpc-flow-logs"
