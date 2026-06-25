@@ -1,0 +1,99 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.tf'
+      - '**.hcl'
+      - '.github/workflows/terraform-ci.yml'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: '1.9.0'
+  AWS_REGION: 'eu-west-1'
+  WORKING_DIR: 'environments/dev'
+
+jobs:
+  terraform-ci:
+    name: Terraform CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::945475931696:role/GitHubActions-TerraformCI
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config=backend.hcl
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
+          soft_fail: false
+          output_format: cli
+          skip_check: CKV_AWS_144,CKV_AWS_18,CKV_AWS_119,CKV2_AWS_62,CKV2_AWS_61,CKV_AWS_145,CKV_AWS_158
+      
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: .
+          exit-code: 1
+          severity: HIGH,CRITICAL
+        env:
+          TRIVY_IGNOREFILE: .trivyignore
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Post Plan to PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const output = `#### Terraform CI Results
+            | Step | Status |
+            |------|--------|
+            | Format | ${{ steps.fmt.outcome == 'success' && '✅' || '❌' }} |
+            | Init | ${{ steps.init.outcome == 'success' && '✅' || '❌' }} |
+            | Validate | ${{ steps.validate.outcome == 'success' && '✅' || '❌' }} |
+            | Plan | ${{ steps.plan.outcome == 'success' && '✅' || '❌' }} |
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
