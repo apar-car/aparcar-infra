@@ -70,6 +70,7 @@ jobs:
           scan-ref: .
           exit-code: 1
           severity: HIGH,CRITICAL
+          trivignore: .trivyignore
 
       - name: Terraform Plan
         id: plan

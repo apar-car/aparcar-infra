@@ -1,0 +1,3 @@
+# S3 state bucket uses SSE-S3 (AES256) instead of KMS CMK
+# KMS CMK adds operational risk for Terraform state - if key is deleted, state is unrecoverable
+AVD-AWS-0132
