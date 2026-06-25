@@ -129,6 +129,25 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
+resource "aws_dynamodb_table" "terraform_locks" {
+  name         = "aparcar-terraform-locks"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.eu-west-1.dynamodb"
@@ -154,5 +173,24 @@ resource "aws_vpc_endpoint" "s3" {
     Environment = var.environment
     Project     = var.project
     ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_default_security_group" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name        = "${var.project}-${var.environment}-default-sg-restricted"
+    Environment = var.environment
+    Project     = var.project
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  versioning_configuration {
+    status = enabled
   }
 }
