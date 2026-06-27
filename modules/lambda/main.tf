@@ -24,51 +24,53 @@ resource "aws_iam_role" "lambda" {
   }
 }
 
+locals {
+  ec2_statements = length(var.subnet_ids) > 0 ? [
+    {
+      Effect = "Allow"
+      Action = [
+        "ec2:CreateNetworkInterface",
+        "ec2:DeleteNetworkInterface"
+      ]
+      Resource = [
+        "arn:aws:ec2:eu-west-1:*:network-interface/*",
+        "arn:aws:ec2:eu-west-1:*:subnet/*",
+        "arn:aws:ec2:eu-west-1:*:security-group/*"
+      ]
+    },
+    {
+      Effect   = "Allow"
+      Action   = ["ec2:DescribeNetworkInterfaces"]
+      Resource = "*"
+    }
+  ] : []
+
+  custom_statements = [for stmt in var.policy_statements : {
+    Effect   = stmt.effect
+    Action   = stmt.actions
+    Resource = stmt.resources
+  }]
+
+  base_statements = [
+    {
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      Resource = "arn:aws:logs:eu-west-1:*:log-group:/aws/lambda/${var.project}-${var.environment}-${var.function_name}:*"
+    }
+  ]
+}
+
 resource "aws_iam_role_policy" "lambda" {
   name = "${var.project}-${var.environment}-${var.function_name}-policy"
   role = aws_iam_role.lambda.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = concat(
-      [
-        {
-          Effect = "Allow"
-          Action = [
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents"
-          ]
-          Resource = "arn:aws:logs:eu-west-1:*:log-group:/aws/lambda/${var.project}-${var.environment}-${var.function_name}:*"
-        }
-      ],
-      length(var.subnet_ids) > 0 ? [
-        {
-          Effect = "Allow"
-          Action = [
-            "ec2:CreateNetworkInterface",
-            "ec2:DeleteNetworkInterface"
-          ]
-          Resource = [
-            "arn:aws:ec2:eu-west-1:*:network-interface/*",
-            "arn:aws:ec2:eu-west-1:*:subnet/*",
-            "arn:aws:ec2:eu-west-1:*:security-group/*"
-          ]
-        },
-        {
-          Effect = "Allow"
-          Action = [
-            "ec2:DescribeNetworkInterfaces"
-          ]
-          Resource = "*"
-        }
-      ] : [],
-      [for stmt in var.policy_statements : {
-        Effect   = stmt.effect
-        Action   = stmt.actions
-        Resource = stmt.resources
-      }]
-    )
+    Version   = "2012-10-17"
+    Statement = concat(local.base_statements, local.ec2_statements, local.custom_statements)
   })
 }
 
