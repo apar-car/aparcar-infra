@@ -1,3 +1,6 @@
 # S3 state bucket uses SSE-S3 (AES256) instead of KMS CMK
 # KMS CMK adds operational risk for Terraform state - if key is deleted, state is unrecoverable
 AVD-AWS-0132
+# SQS DLQ uses AWS managed key (alias/aws/sqs) instead of CMK
+# DLQ for Lambda error capture - AWS managed encryption is sufficient at pilot stage
+AVD-AWS-0135
