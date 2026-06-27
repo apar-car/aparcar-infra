@@ -27,8 +27,8 @@ module "leave_signal_handler" {
 
   policy_statements = [
     {
-      effect  = "Allow"
-      actions = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:UpdateItem"]
+      effect    = "Allow"
+      actions   = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:UpdateItem"]
       resources = ["arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-parking-signals"]
     },
     {
