@@ -37,22 +37,13 @@ locals {
     }
   ]
 
-  ec2_create_statement = {
+  ec2_statement = {
     Effect = "Allow"
     Action = [
       "ec2:CreateNetworkInterface",
-      "ec2:DeleteNetworkInterface"
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeNetworkInterfaces"
     ]
-    Resource = [
-      "arn:aws:ec2:eu-west-1:*:network-interface/*",
-      "arn:aws:ec2:eu-west-1:*:subnet/*",
-      "arn:aws:ec2:eu-west-1:*:security-group/*"
-    ]
-  }
-
-  ec2_describe_statement = {
-    Effect   = "Allow"
-    Action   = ["ec2:DescribeNetworkInterfaces"]
     Resource = "*"
   }
 
@@ -71,7 +62,7 @@ resource "aws_iam_role_policy" "lambda" {
     Version = "2012-10-17"
     Statement = concat(
       local.base_statements,
-      length(var.subnet_ids) > 0 ? [local.ec2_create_statement, local.ec2_describe_statement] : [],
+      length(var.subnet_ids) > 0 ? [local.ec2_statement] : [],
       local.custom_statements
     )
   })
