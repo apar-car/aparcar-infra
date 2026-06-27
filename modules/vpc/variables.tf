@@ -13,6 +13,7 @@ variable "private_subnet_cidrs" {
   type        = list(string)
 }
 
+
 variable "public_subnet_cidrs" {
   description = "List of public subnet CIDRs"
   type        = list(string)
@@ -35,4 +36,3 @@ variable "enable_nat_gateway" {
   type        = bool
   default     = false
 }
-
