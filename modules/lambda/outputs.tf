@@ -12,3 +12,8 @@ output "role_arn" {
   description = "Lambda execution role ARN"
   value       = aws_iam_role.lambda.arn
 }
+
+output "dlq_arn" {
+  description = "Dead letter queue ARN"
+  value       = aws_sqs_queue.dlq.arn
+}

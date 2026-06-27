@@ -70,3 +70,9 @@ variable "policy_statements" {
   }))
   default = []
 }
+
+variable "reserved_concurrent_executions" {
+  description = "Reserved concurrent executions (-1 = unreserved)"
+  type        = number
+  default     = 10
+}

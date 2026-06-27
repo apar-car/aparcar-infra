@@ -34,6 +34,11 @@ locals {
         "logs:PutLogEvents"
       ]
       Resource = "arn:aws:logs:eu-west-1:*:log-group:/aws/lambda/${var.project}-${var.environment}-${var.function_name}:*"
+    },
+    {
+      Effect   = "Allow"
+      Action   = ["sqs:SendMessage"]
+      Resource = aws_sqs_queue.dlq.arn
     }
   ]
 
@@ -83,14 +88,19 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 # Lambda function
 resource "aws_lambda_function" "main" {
-  function_name    = "${var.project}-${var.environment}-${var.function_name}"
-  role             = aws_iam_role.lambda.arn
-  handler          = var.handler
-  runtime          = var.runtime
-  filename         = data.archive_file.lambda.output_path
-  source_code_hash = data.archive_file.lambda.output_base64sha256
-  timeout          = var.timeout
-  memory_size      = var.memory_size
+  function_name                  = "${var.project}-${var.environment}-${var.function_name}"
+  role                           = aws_iam_role.lambda.arn
+  handler                        = var.handler
+  runtime                        = var.runtime
+  filename                       = data.archive_file.lambda.output_path
+  source_code_hash               = data.archive_file.lambda.output_base64sha256
+  timeout                        = var.timeout
+  memory_size                    = var.memory_size
+  reserved_concurrent_executions = var.reserved_concurrent_executions
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.dlq.arn
+  }
 
   environment {
     variables = var.environment_variables
@@ -108,6 +118,19 @@ resource "aws_lambda_function" "main" {
     aws_iam_role_policy.lambda,
     aws_cloudwatch_log_group.lambda
   ]
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project
+    ManagedBy   = "terraform"
+  }
+}
+
+# SQS DLQ 
+resource "aws_sqs_queue" "dlq" {
+  name                      = "${var.project}-${var.environment}-${var.function_name}-dlq"
+  message_retention_seconds = 1209600
+  kms_master_key_id         = "alias/aws/sqs"
 
   tags = {
     Environment = var.environment
