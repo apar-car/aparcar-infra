@@ -18,7 +18,7 @@ data "archive_file" "leave_signal_handler" {
 
 
 module "leave_signal_handler" {
-  source = "../../modules/lambda"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=cf86b974b5b11d21da7605b626e9270080f17b07"
 
   function_name                  = "leave-signal-handler"
   zip_path                       = data.archive_file.leave_signal_handler.output_path
