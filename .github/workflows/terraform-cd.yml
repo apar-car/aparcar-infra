@@ -1,0 +1,209 @@
+name: Terraform CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.tf'
+      - '**.hcl'
+      - 'src/**'
+      - '.github/workflows/terraform-cd.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VERSION: '1.9.0'
+  AWS_REGION: 'eu-west-1'
+
+jobs:
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      deploy_outcome: ${{ steps.apply.outcome }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Git for module downloads
+        run: git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::945475931696:role/GitHubActions-TerraformCD
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        working-directory: environments/dev
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Plan
+        working-directory: environments/dev
+        run: terraform plan -no-color -out=tfplan
+
+      - name: Terraform Apply
+        id: apply
+        working-directory: environments/dev
+        run: terraform apply -auto-approve tfplan
+
+      - name: Notify Slack - Dev Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "✅ *AparCar Dev* deployment succeeded\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack - Dev Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "❌ *AparCar Dev* deployment FAILED\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  smoke-test-dev:
+    name: Smoke Test Dev
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    environment: dev
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::945475931696:role/GitHubActions-TerraformCD
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify Lambda exists and is active
+        run: |
+          STATUS=$(aws lambda get-function \
+            --function-name aparcar-dev-leave-signal-handler \
+            --query 'Configuration.State' \
+            --output text)
+          echo "Lambda state: $STATUS"
+          if [ "$STATUS" != "Active" ]; then
+            echo "Lambda is not active: $STATUS"
+            exit 1
+          fi
+
+      - name: Notify Slack - Smoke Test Passed
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "🧪 *AparCar Dev* smoke test passed — staging gate opening in 5 minutes\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack - Smoke Test Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "❌ *AparCar Dev* smoke test FAILED — staging promotion blocked\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: smoke-test-dev
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Notify Slack - Staging Starting
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "🚀 *AparCar Staging* deployment starting\n*Commit:* ${{ github.sha }}\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Staging deploy placeholder
+        run: |
+          echo "Staging environment not yet provisioned."
+          echo "This job will apply terraform to aparcar-staging when the environment is built."
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Notify Slack - Staging Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "✅ *AparCar Staging* deployment succeeded — prod gate open for approval\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  deploy-prod:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Notify Slack - Prod Starting
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "🚀 *AparCar Prod* deployment starting\n*Commit:* ${{ github.sha }}\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Prod deploy placeholder
+        run: |
+          echo "Prod environment not yet provisioned."
+          echo "This job will apply terraform to aparcar-prod when the environment is built."
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Notify Slack - Prod Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "✅ *AparCar Prod* deployment succeeded\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

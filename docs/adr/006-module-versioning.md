@@ -17,7 +17,7 @@ All module references use Git tags via the GitHub source syntax:
 
 ```hcl
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=v1.0.0"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=COMMIT_HASH"
 }
 ```
 
