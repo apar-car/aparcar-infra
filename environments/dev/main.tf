@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "../../modules/vpc"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=v1.0.0"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -10,15 +10,23 @@ module "vpc" {
 }
 
 # Lambda Module
+data "archive_file" "leave_signal_handler" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/leave-signal-handler"
+  output_path = "${path.root}/builds/leave-signal-handler.zip"
+}
+
+
 module "leave_signal_handler" {
   source = "../../modules/lambda"
 
-  function_name = "leave-signal-handler"
-  source_dir    = "${path.root}/../../src/leave-signal-handler"
-  environment   = "dev"
-  project       = "aparcar"
-  timeout       = 30
-  memory_size   = 128
+  function_name                  = "leave-signal-handler"
+  zip_path                       = data.archive_file.leave_signal_handler.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
 
   environment_variables = {
     PARKING_TABLE  = "aparcar-dev-parking-signals"
