@@ -15,8 +15,8 @@ variable "runtime" {
   default     = "python3.12"
 }
 
-variable "source_dir" {
-  description = "Path to Lambda source code"
+variable "zip_path" {
+  description = "Path to the Lambda deployment zip file"
   type        = string
 }
 
@@ -74,5 +74,5 @@ variable "policy_statements" {
 variable "reserved_concurrent_executions" {
   description = "Reserved concurrent executions (-1 = unreserved)"
   type        = number
-  default     = 10
+  default     = -1
 }

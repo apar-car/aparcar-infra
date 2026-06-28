@@ -1,8 +1,3 @@
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_dir  = var.source_dir
-  output_path = "${path.module}/builds/${var.function_name}.zip"
-}
 
 # Lambda IAM Role
 resource "aws_iam_role" "lambda" {
@@ -92,8 +87,8 @@ resource "aws_lambda_function" "main" {
   role                           = aws_iam_role.lambda.arn
   handler                        = var.handler
   runtime                        = var.runtime
-  filename                       = data.archive_file.lambda.output_path
-  source_code_hash               = data.archive_file.lambda.output_base64sha256
+  filename                       = var.zip_path
+  source_code_hash               = filebase64sha256(var.zip_path)
   timeout                        = var.timeout
   memory_size                    = var.memory_size
   reserved_concurrent_executions = var.reserved_concurrent_executions
