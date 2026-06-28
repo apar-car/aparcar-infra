@@ -39,6 +39,10 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Configure Git for GitHub
+        run: git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+
       - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive
