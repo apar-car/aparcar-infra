@@ -1,0 +1,78 @@
+name: Terraform Drift Detection
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VERSION: '1.9.0'
+  AWS_REGION: 'eu-west-1'
+
+jobs:
+  drift-detection:
+    name: Detect Infrastructure Drift
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Git for module downloads
+        run: git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::945475931696:role/GitHubActions-TerraformCI
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        working-directory: environments/dev
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: environments/dev
+        run: |
+          terraform plan -detailed-exitcode -no-color 2>&1 | tee plan_output.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Notify Slack - Drift Detected
+        if: steps.plan.outputs.exitcode == '2'
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ *Infrastructure Drift Detected* in AparCar Dev\nTerraform detected differences between state and real infrastructure.\n*Action required:* Review and apply or investigate manual changes.\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack - No Drift
+        if: steps.plan.outputs.exitcode == '0'
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "✅ *No Infrastructure Drift* detected in AparCar Dev\nAll infrastructure matches Terraform state."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Fail on drift
+        if: steps.plan.outputs.exitcode == '2'
+        run: |
+          echo "Drift detected. Review the plan output above."
+          exit 1
