@@ -91,7 +91,7 @@ resource "aws_iam_role_policy" "ci" {
           "dynamodb:PutItem",
           "dynamodb:DeleteItem"
         ]
-        Resource = "arn:aws:dynamodb:eu-west-1:${var.account_id}:table/${var.lock_table}"
+        Resource = "arn:aws:dynamodb:eu-west-1:022079552075:table/${var.lock_table}"
       },
       {
         Sid    = "TerraformPlanRead"
@@ -157,7 +157,7 @@ resource "aws_iam_role_policy" "cd" {
           "dynamodb:PutItem",
           "dynamodb:DeleteItem"
         ]
-        Resource = "arn:aws:dynamodb:eu-west-1:${var.account_id}:table/${var.lock_table}"
+        Resource = "arn:aws:dynamodb:eu-west-1:022079552075:table/${var.lock_table}"
       },
       {
         Sid    = "LambdaManage"
