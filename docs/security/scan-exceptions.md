@@ -155,6 +155,36 @@ underlying issue with different identifiers.
 **Risk:** Low. See CKV2_AWS_73.
 **Review:** December 2026.
 
+### CKV_AWS_288 — IAM Data Exfiltration
+**Resource:** `module.github_oidc.aws_iam_role_policy.ci`
+**Reason:** Flags s3:GetObject + s3:PutObject as potential data exfiltration. Resource is
+scoped to the Terraform state bucket only — not a wildcard. CI role cannot access any
+other S3 bucket. False positive.
+**Risk:** None. S3 actions are scoped to `aparcar-terraform-state-022079552075` only.
+**Review:** December 2026.
+
+---
+
+### CKV_AWS_287 — IAM Credentials Exposure
+**Resource:** `module.github_oidc.aws_iam_role_policy.ci` and `.cd`
+**Reason:** Flags iam:Get* and iam:List* as potential credential exposure. These are
+read-only actions required for terraform plan to read existing IAM resources.
+No credential-creating actions (iam:CreateAccessKey, iam:CreateLoginProfile) are included.
+**Risk:** Low. Read-only IAM actions cannot expose or create credentials.
+**Review:** December 2026.
+
+---
+
+### CKV_AWS_290 — Write Access Without Constraints
+**Resource:** `module.github_oidc.aws_iam_role_policy.cd`
+**Reason:** CD role requires write access to EC2, CloudWatch, ElastiCache, and AppSync
+to manage AparCar infrastructure. Some of these services do not support resource-level
+restrictions on all actions (e.g. EC2 Describe* actions). The CD role is scoped to
+main branch only via OIDC trust policy and cannot be assumed by PRs or human users.
+**Risk:** Accepted. CD role is the minimum required to manage AparCar infrastructure
+via Terraform. Mitigated by OIDC trust policy scoping and branch protection on main.
+**Review:** December 2026.
+
 ---
 
 ## Exception Policy

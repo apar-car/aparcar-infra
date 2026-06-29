@@ -54,3 +54,13 @@ module "parking_signals_table" {
   environment = "dev"
   project     = "aparcar"
 }
+
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  environment  = "dev"
+  project      = "aparcar"
+  account_id   = "945475931696"
+  state_bucket = "aparcar-terraform-state-022079552075"
+  lock_table   = "aparcar-terraform-locks"
+}
