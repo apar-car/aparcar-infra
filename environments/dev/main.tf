@@ -46,3 +46,11 @@ module "leave_signal_handler" {
     }
   ]
 }
+
+module "parking_signals_table" {
+  source = "../../modules/dynamodb"
+
+  table_name  = "parking-signals"
+  environment = "dev"
+  project     = "aparcar"
+}
