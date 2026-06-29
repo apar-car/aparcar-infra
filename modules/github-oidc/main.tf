@@ -200,6 +200,8 @@ resource "aws_iam_role_policy" "cd" {
           "iam:DetachRolePolicy",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
+          "iam:ListOpenIDConnectProviders",
+          "iam:GetOpenIDConnectProvider",
           "iam:TagRole",
           "iam:UntagRole",
           "iam:PassRole"
