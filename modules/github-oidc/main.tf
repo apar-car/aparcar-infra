@@ -206,7 +206,10 @@ resource "aws_iam_role_policy" "cd" {
           "iam:UntagRole",
           "iam:PassRole"
         ]
-        Resource = "arn:aws:iam::${var.account_id}:role/${var.project}-*"
+        Resource = [
+          "arn:aws:iam::${var.account_id}:role/${var.project}-*",
+          "arn:aws:iam::${var.account_id}:role/GitHubActions-*"
+        ]
       },
       {
         Sid    = "DynamoDBManage"
