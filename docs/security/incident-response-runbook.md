@@ -129,6 +129,24 @@
 
 ---
 
+## Playbook 6 — CD Pipeline Bootstrap Deadlock
+
+**Triggers:**
+- CD role cannot plan because it lacks a permission needed to read its own resources
+- Chicken-and-egg: can't apply the fix because can't plan
+
+**Steps:**
+1. Identify the missing permission from the AccessDenied error
+2. Manually add it via CLI using aparcar-management or aparcar-dev profile
+3. Trigger a new CD run — it will now plan successfully
+4. CD applies the Terraform code which overwrites the manual change with the correct version
+5. Verify the manual change and Terraform code are identical post-apply
+
+**Prevention:**
+- When adding new AWS services to the github-oidc module, always add the required
+  read permissions (Get*, List*, Describe*) before adding the write permissions
+- Test new module changes locally with terraform plan before merging
+
 ## Communication Template
 
 For any P1 or P2 incident, notify Emilio within 30 minutes:
