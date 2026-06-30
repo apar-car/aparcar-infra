@@ -48,7 +48,7 @@ module "leave_signal_handler" {
 }
 
 module "parking_signals_table" {
-  source = "../../modules/dynamodb"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=b6fb4dbfba8ec03b8798657c72dff02224f3f231"
 
   table_name  = "parking-signals"
   environment = "dev"
@@ -56,7 +56,7 @@ module "parking_signals_table" {
 }
 
 module "github_oidc" {
-  source = "../../modules/github-oidc"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/github-oidc?ref=b6fb4dbfba8ec03b8798657c72dff02224f3f231"
 
   environment  = "dev"
   project      = "aparcar"
