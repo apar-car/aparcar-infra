@@ -11,8 +11,8 @@ resource "aws_dynamodb_table" "main" {
   dynamic "attribute" {
     for_each = var.additional_attributes
     content {
-        name = attribute.value.name
-        type = attribute.value.type
+      name = attribute.value.name
+      type = attribute.value.type
     }
   }
 
@@ -30,11 +30,11 @@ resource "aws_dynamodb_table" "main" {
   dynamic "global_secondary_index" {
     for_each = var.global_secondary_indexes
     content {
-        name               = global_secondary_indexes.value.name
-        hash_key           = global_secondary_indexes.value.hash_key
-        range_key          = global_secondary_indexes.value.range_key
-        projection_type    = global_secondary_indexes.value.projection_type
-        non_key_attributes = global_secondary_indexes.value.projection_type == "INCLUDE" ? global_secondary_indexes.value.non_key_attributes : null
+      name               = global_secondary_indexes.value.name
+      hash_key           = global_secondary_indexes.value.hash_key
+      range_key          = global_secondary_indexes.value.range_key
+      projection_type    = global_secondary_indexes.value.projection_type
+      non_key_attributes = global_secondary_indexes.value.projection_type == "INCLUDE" ? global_secondary_indexes.value.non_key_attributes : null
     }
   }
 
