@@ -14,12 +14,12 @@ resource "aws_cloudwatch_event_archive" "main" {
   event_source_arn = aws_cloudwatch_event_bus.main.arn
   retention_days   = 7
 
-  event_pattern = jsonenconde({
+  event_pattern = jsonencode({
     source = ["aparcar.leave-signal"]
   })
 }
 
-resource "aws_schema_discoverer" "main" {
+resource "aws_schemas_discoverer" "main" {
   source_arn  = aws_cloudwatch_event_bus.main.arn
   description = "Auto-discover schemas for AparCar events"
 
