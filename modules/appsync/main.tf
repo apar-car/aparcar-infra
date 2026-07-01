@@ -4,7 +4,7 @@ resource "aws_appsync_graphql_api" "main" {
 
   log_config {
     cloudwatch_logs_role_arn = aws_iam_role.appsync_logs.arn
-    field_log_level          = "ERROR"
+    field_log_level          = "ALL"
   }
 
   tags = {
@@ -131,9 +131,6 @@ resource "aws_iam_role_policy" "appsync_dynamodb" {
 }
 
 # Schema
-resource "aws_appsync_graphql_api" "schema" {
-  depends_on = [aws_appsync_graphql_api.main]
-}
 
 resource "aws_appsync_schema" "main" {
   api_id     = aws_appsync_graphql_api.main.id
@@ -180,10 +177,10 @@ resource "aws_appsync_resolver" "create_parking_signal" {
   data_source = aws_appsync_datasource.leave_signal_handler.name
 
   request_template = jsonencode({
-    version   = "2018-05-29"
+    version = "2018-05-29"
     operation = "Invoke"
     payload = {
-      field     = "createParkingSignal"
+      field = "createParkingSignal"
       arguments = "$util.toJson($ctx.args)"
     }
   })
