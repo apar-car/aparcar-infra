@@ -120,7 +120,10 @@ resource "aws_iam_role_policy" "ci" {
           "logs:Get*",
           "logs:ListTagsForResource",
           "sqs:Get*",
-          "sqs:List*"
+          "sqs:List*",
+          "schemas:Describe*",
+          "schemas:List*",
+          "schemas:Get*"
         ]
         Resource = "*"
       }
@@ -348,7 +351,18 @@ resource "aws_iam_role_policy" "cd" {
           "events:ListTargetsByRule",
           "events:TagResource",
           "events:UntagResource",
-          "events:ListTagsForResource"
+          "events:ListTagsForResource",
+          "events:DescribeArchive",
+          "events:ListArchives",
+          "schemas:CreateDiscoverer",
+          "schemas:DeleteDiscoverer",
+          "schemas:DescribeDiscoverer",
+          "schemas:UpdateDiscoverer",
+          "schemas:ListDiscoverers",
+          "schemas:TagResource",
+          "schemas:UntagResource",
+          "schemas:ListTagsForResource"
+          
         ]
         Resource = "arn:aws:events:eu-west-1:${var.account_id}:*"
       },

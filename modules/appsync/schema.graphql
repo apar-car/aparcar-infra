@@ -1,0 +1,100 @@
+type ParkingSignalResponse {
+  success: Boolean!
+  signalId: String
+  expiresAt: Int
+  earlyWarningAt: Int
+  timerMinutes: Int
+  error: String
+}
+
+type LookResponse {
+  success: Boolean!
+  lookId: String
+  error: String
+}
+
+type ParkerInput {
+  name: String!
+  carDetails: String!
+}
+
+type ExchangeResponse {
+  success: Boolean!
+  exchangeId: String
+  error: String
+}
+
+type ExchangeStatus {
+  success: Boolean!
+  status: String
+  error: String
+}
+
+type CancelResponse {
+  success: Boolean!
+  error: String
+}
+
+type ParkingSignal {
+  signalId: String!
+  user: String!
+  carDetails: String!
+  lat: Float!
+  lng: Float!
+  timerMinutes: Int!
+  expiresAt: Int!
+}
+
+type Mutation {
+  createParkingSignal(
+    user: String!
+    carDetails: String!
+    lat: Float!
+    lng: Float!
+    timer_minutes: Int!
+  ): ParkingSignalResponse!
+
+  registerLookingDriver(
+    userId: String!
+    lat: Float!
+    lng: Float!
+    radius_meters: Int!
+  ): LookResponse!
+
+  requestSpot(
+    spotId: String!
+    userId: String!
+    carDetails: String!
+  ): ExchangeResponse!
+
+  confirmExchange(
+    exchangeId: String!
+    role: String!
+  ): ExchangeStatus!
+
+  cancelExchange(
+    exchangeId: String!
+    role: String!
+  ): CancelResponse!
+
+  updateLocation(
+    exchangeId: String!
+    lat: Float!
+    lng: Float!
+  ): Boolean!
+}
+
+type Subscription {
+  onSpotsUpdate: ParkingSignal
+    @aws_subscribe(mutations: ["createParkingSignal"])
+}
+
+type Query {
+  getSignal(signalId: String!): ParkingSignal
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}

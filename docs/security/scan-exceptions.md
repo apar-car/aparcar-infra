@@ -185,6 +185,14 @@ main branch only via OIDC trust policy and cannot be assumed by PRs or human use
 via Terraform. Mitigated by OIDC trust policy scoping and branch protection on main.
 **Review:** December 2026.
 
+### CKV2_AWS_33 — AppSync WAF Protection
+**Resource:** `module.appsync.aws_appsync_graphql_api.main`
+**Reason:** WAF requires AppSync to be live with real traffic patterns before
+rules can be tuned correctly. Adding WAF with misconfigured rules would block
+legitimate traffic. WAF will be added pre-launch per the pentest plan.
+**Risk:** Accepted for dev environment. WAF is mandatory before prod launch.
+**Review:** When AppSync goes to production.
+
 ---
 
 ## Exception Policy
