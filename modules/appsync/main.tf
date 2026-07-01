@@ -1,6 +1,7 @@
 resource "aws_appsync_graphql_api" "main" {
   name                = "${var.project}-${var.environment}"
   authentication_type = "API_KEY"
+  schema              = file("${path.module}/schema.graphql")
 
   log_config {
     cloudwatch_logs_role_arn = aws_iam_role.appsync_logs.arn
@@ -130,12 +131,6 @@ resource "aws_iam_role_policy" "appsync_dynamodb" {
   })
 }
 
-# Schema
-
-resource "aws_appsync_schema" "main" {
-  api_id     = aws_appsync_graphql_api.main.id
-  definition = file("${path.module}/schema.graphql")
-}
 
 # Lambda data source for leave-signal-handler
 resource "aws_appsync_datasource" "leave_signal_handler" {
@@ -187,7 +182,6 @@ resource "aws_appsync_resolver" "create_parking_signal" {
 
   response_template = "$util.toJson($ctx.result)"
 
-  depends_on = [aws_appsync_schema.main]
 }
 
 # Stub resolver — registerLookingDriver
@@ -207,7 +201,6 @@ resource "aws_appsync_resolver" "register_looking_driver" {
     lookId  = "stub-look-id"
   })
 
-  depends_on = [aws_appsync_schema.main]
 }
 
 # Stub resolver — requestSpot
@@ -227,7 +220,6 @@ resource "aws_appsync_resolver" "request_spot" {
     exchangeId = "stub-exchange-id"
   })
 
-  depends_on = [aws_appsync_schema.main]
 }
 
 # Stub resolver — confirmExchange
@@ -247,7 +239,6 @@ resource "aws_appsync_resolver" "confirm_exchange" {
     status  = "CONFIRMED"
   })
 
-  depends_on = [aws_appsync_schema.main]
 }
 
 # Stub resolver — cancelExchange
@@ -266,7 +257,6 @@ resource "aws_appsync_resolver" "cancel_exchange" {
     success = true
   })
 
-  depends_on = [aws_appsync_schema.main]
 }
 
 # Stub resolver — updateLocation
@@ -283,7 +273,6 @@ resource "aws_appsync_resolver" "update_location" {
 
   response_template = "true"
 
-  depends_on = [aws_appsync_schema.main]
 }
 
 # getSignal query resolver → DynamoDB
@@ -303,5 +292,4 @@ resource "aws_appsync_resolver" "get_signal" {
 
   response_template = "$util.toJson($ctx.result)"
 
-  depends_on = [aws_appsync_schema.main]
 }
