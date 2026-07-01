@@ -1,11 +1,11 @@
 variable "environment" {
   description = "Environment name"
-  type        = string 
+  type        = string
 }
 
 variable "project" {
   description = "Project name"
   type        = string
-  default     = "aparcar" 
+  default     = "aparcar"
 }
 

@@ -69,5 +69,5 @@ module "eventbridge" {
   source = "../../modules/eventbridge"
 
   environment = "dev"
-  project     = "aparcar" 
+  project     = "aparcar"
 }
