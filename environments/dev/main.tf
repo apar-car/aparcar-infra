@@ -64,3 +64,10 @@ module "github_oidc" {
   state_bucket = "aparcar-terraform-state-022079552075"
   lock_table   = "aparcar-terraform-locks"
 }
+
+module "eventbridge" {
+  source = "../../modules/eventbridge"
+
+  environment = "dev"
+  project     = "aparcar"
+}
