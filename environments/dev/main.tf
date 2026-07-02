@@ -91,7 +91,7 @@ module "cloudwatch_alarms" {
   project              = "aparcar"
   slack_webhook_url    = var.slack_webhook_url
   lambda_function_name = module.leave_signal_handler.function_name
-  dlq_name             = module.leave_signal_handler.dlq_name
+  dlq_name             = "aparcar-dev-leave-signal-handler-dlq"
   appsync_api_id       = module.appsync.api_id
 }
 
