@@ -84,8 +84,18 @@ type Mutation {
   ): Boolean!
 }
 
+type SpotUpdate {
+  signalId: String
+  user: String
+  carDetails: String
+  lat: Float
+  lng: Float
+  timerMinutes: Int
+  expiresAt: Int
+}
+
 type Subscription {
-  onSpotsUpdate: ParkingSignal
+  onSpotsUpdate: SpotUpdate
     @aws_subscribe(mutations: ["createParkingSignal"])
 }
 
