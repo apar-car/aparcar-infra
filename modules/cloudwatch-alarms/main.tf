@@ -1,7 +1,8 @@
 # ─── SNS Topic ────────────────────────────────────────────────────────────────
 
 resource "aws_sns_topic" "alarms" {
-  name = "${var.project}-${var.environment}-alarms"
+  name              = "${var.project}-${var.environment}-alarms"
+  kms_master_key_id = "alias/aws/sns"
 
   tags = {
     Environment = var.environment
