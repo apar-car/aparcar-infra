@@ -83,3 +83,22 @@ module "appsync" {
   parking_signals_table_arn  = module.parking_signals_table.table_arn
   parking_signals_table_name = module.parking_signals_table.table_name
 }
+
+
+resource "aws_iam_role_policy" "cd_iam_bootstrap" {
+  name = "CDRoleIAMBootstrap"
+  role = "GitHubActions-TerraformCD"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "ManageOwnPolicy"
+      Effect = "Allow"
+      Action = ["iam:*"]
+      Resource = [
+        "arn:aws:iam::945475931696:role/GitHubActions-TerraformCI",
+        "arn:aws:iam::945475931696:role/GitHubActions-TerraformCD",
+      ]
+    }]
+  })
+}
