@@ -51,11 +51,15 @@ jobs:
 
       - name: Terraform Plan
         working-directory: environments/dev
+        env:
+          TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: terraform plan -no-color -out=tfplan
 
       - name: Terraform Apply
         id: apply
         working-directory: environments/dev
+        env:
+          TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: terraform apply -auto-approve tfplan
 
       - name: Notify Slack - Dev Success
