@@ -1,5 +1,5 @@
 type ParkingSignalResponse {
-  success: Boolean!
+  success: Boolean
   signalId: String
   expiresAt: Int
   earlyWarningAt: Int
@@ -95,7 +95,7 @@ type SpotUpdate {
 }
 
 type Subscription {
-  onSpotsUpdate: SpotUpdate
+  onSpotsUpdate: ParkingSignalResponse
     @aws_subscribe(mutations: ["createParkingSignal"])
 }
 
