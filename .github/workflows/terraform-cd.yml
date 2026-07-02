@@ -9,6 +9,7 @@ on:
       - '**.hcl'
       - 'src/**'
       - '.github/workflows/terraform-cd.yml'
+      - '**.graphql'
 
 permissions:
   id-token: write
