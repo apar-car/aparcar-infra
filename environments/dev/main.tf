@@ -83,3 +83,32 @@ module "appsync" {
   parking_signals_table_arn  = module.parking_signals_table.table_arn
   parking_signals_table_name = module.parking_signals_table.table_name
 }
+
+module "cloudwatch_alarms" {
+  source = "../../modules/cloudwatch-alarms"
+
+  environment          = "dev"
+  project              = "aparcar"
+  slack_webhook_url    = var.slack_webhook_url
+  lambda_function_name = module.leave_signal_handler.function_name
+  dlq_name             = module.leave_signal_handler.dlq_name
+  appsync_api_id       = module.appsync.api_id
+}
+
+resource "aws_iam_role_policy" "cd_iam_bootstrap" {
+  name = "CDRoleIAMBootstrap"
+  role = "GitHubActions-TerraformCD"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "ManageOwnPolicy"
+      Effect = "Allow"
+      Action = ["iam:*"]
+      Resource = [
+        "arn:aws:iam::945475931696:role/GitHubActions-TerraformCI",
+        "arn:aws:iam::945475931696:role/GitHubActions-TerraformCD",
+      ]
+    }]
+  })
+}
