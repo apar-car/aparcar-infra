@@ -193,6 +193,17 @@ legitimate traffic. WAF will be added pre-launch per the pentest plan.
 **Risk:** Accepted for dev environment. WAF is mandatory before prod launch.
 **Review:** When AppSync goes to production.
 
+### CKV2_AWS_40 — Full IAM Privileges (CDRoleIAMBootstrap)
+**Resource:** `aws_iam_role_policy.cd_iam_bootstrap`
+**Reason:** CD role requires iam:* scoped to GitHubActions-TerraformCI and
+GitHubActions-TerraformCD roles only. This breaks the bootstrap deadlock where
+any new AWS service added to the github-oidc module would require manual
+break-glass before CI could plan. Resource scope is two specific role ARNs,
+not wildcard. The CD role is already trusted with main branch OIDC — full IAM
+on these two roles does not materially increase the attack surface.
+**Risk:** Accepted. Mitigated by OIDC trust policy scoping to main branch only.
+**Review:** December 2026.
+
 ---
 
 ## Exception Policy
