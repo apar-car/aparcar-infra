@@ -123,7 +123,14 @@ resource "aws_iam_role_policy" "ci" {
           "sqs:List*",
           "schemas:Describe*",
           "schemas:List*",
-          "schemas:Get*"
+          "schemas:Get*",
+          "sns:GetTopicAttributes",
+          "sns:ListTopics",
+          "sns:ListTagsForResource",
+          "sns:GetSubscriptionAttributes",
+          "sns:ListSubscriptionsByTopic",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource"
         ]
         Resource = "*"
       }
