@@ -171,14 +171,16 @@ resource "aws_appsync_resolver" "create_parking_signal" {
   field       = "createParkingSignal"
   data_source = aws_appsync_datasource.leave_signal_handler.name
 
-  request_template = jsonencode({
-    version   = "2018-05-29"
-    operation = "Invoke"
-    payload = {
-      field     = "createParkingSignal"
-      arguments = "$util.toJson($ctx.args)"
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "Invoke",
+      "payload": {
+        "field": "createParkingSignal",
+        "arguments": $util.toJson($ctx.args)
+      }
     }
-  })
+  EOT
 
   response_template = "$util.toJson($ctx.result)"
 
@@ -282,13 +284,15 @@ resource "aws_appsync_resolver" "get_signal" {
   field       = "getSignal"
   data_source = aws_appsync_datasource.parking_signals.name
 
-  request_template = jsonencode({
-    version   = "2018-05-29"
-    operation = "GetItem"
-    key = {
-      signalId = { S = "$ctx.args.signalId" }
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "GetItem",
+      "key": {
+        "signalId": $util.dynamodb.toDynamoDBJson($ctx.args.signalId)
+      }
     }
-  })
+  EOT
 
   response_template = "$util.toJson($ctx.result)"
 
