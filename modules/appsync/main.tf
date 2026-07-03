@@ -172,10 +172,10 @@ resource "aws_appsync_resolver" "create_parking_signal" {
   data_source = aws_appsync_datasource.leave_signal_handler.name
 
   request_template = jsonencode({
-    version = "2018-05-29"
+    version   = "2018-05-29"
     operation = "Invoke"
     payload = {
-      field = "createParkingSignal"
+      field     = "createParkingSignal"
       arguments = "$util.toJson($ctx.args)"
     }
   })
