@@ -362,7 +362,7 @@ resource "aws_iam_role_policy" "cd" {
           "schemas:TagResource",
           "schemas:UntagResource",
           "schemas:ListTagsForResource"
-          
+
         ]
         Resource = "arn:aws:events:eu-west-1:${var.account_id}:*"
       },
@@ -413,6 +413,38 @@ resource "aws_iam_role_policy" "cd" {
           "appsync:DeleteApiKey",
           "appsync:ListApiKeys",
           "appsync:UpdateApiKey"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SNSManage"
+        Effect = "Allow"
+        Action = [
+          "sns:CreateTopic",
+          "sns:DeleteTopic",
+          "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes",
+          "sns:ListTopics",
+          "sns:TagResource",
+          "sns:UntagResource",
+          "sns:ListTagsForResource",
+          "sns:Subscribe",
+          "sns:Unsubscribe",
+          "sns:GetSubscriptionAttributes",
+          "sns:ListSubscriptionsByTopic"
+        ]
+        Resource = "arn:aws:sns:eu-west-1:${var.account_id}:${var.project}-*"
+      },
+      {
+        Sid    = "CloudWatchAlarmsManage"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
         ]
         Resource = "*"
       }
