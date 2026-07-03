@@ -84,6 +84,16 @@ module "appsync" {
   parking_signals_table_name = module.parking_signals_table.table_name
 }
 
+module "cloudwatch_alarms" {
+  source = "../../modules/cloudwatch-alarms"
+
+  environment          = "dev"
+  project              = "aparcar"
+  slack_webhook_url    = var.slack_webhook_url
+  lambda_function_name = module.leave_signal_handler.function_name
+  dlq_name             = "aparcar-dev-leave-signal-handler-dlq"
+  appsync_api_id       = module.appsync.api_id
+}
 
 resource "aws_iam_role_policy" "cd_iam_bootstrap" {
   name = "CDRoleIAMBootstrap"

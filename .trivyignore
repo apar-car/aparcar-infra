@@ -4,3 +4,4 @@ AVD-AWS-0132
 # SQS DLQ uses AWS managed key (alias/aws/sqs) instead of CMK
 # DLQ for Lambda error capture - AWS managed encryption is sufficient at pilot stage
 AVD-AWS-0135
+AVD-AWS-0136

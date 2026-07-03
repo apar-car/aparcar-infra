@@ -136,25 +136,6 @@ secrets will be stored in AWS Secrets Manager, not environment variables.
 **Review:** If any secret or PII is ever added to environment variables (which
 is explicitly prohibited by this project's security policy).
 
----
-
-## Trivy Exceptions
-
-### AVD-AWS-0132 — S3 KMS Customer Managed Key
-**Resource:** `aparcar-terraform-state-022079552075`
-**Reason:** Same as CKV_AWS_145 above. Trivy and Checkov flag the same
-underlying issue with different identifiers.
-**Risk:** Low. See CKV_AWS_145.
-**Review:** December 2026.
-
----
-
-### AVD-AWS-0135 — SQS KMS Customer Managed Key
-**Resource:** `module.leave_signal_handler.aws_sqs_queue.dlq`
-**Reason:** Same as CKV2_AWS_73 above.
-**Risk:** Low. See CKV2_AWS_73.
-**Review:** December 2026.
-
 ### CKV_AWS_288 — IAM Data Exfiltration
 **Resource:** `module.github_oidc.aws_iam_role_policy.ci`
 **Reason:** Flags s3:GetObject + s3:PutObject as potential data exfiltration. Resource is
@@ -202,6 +183,35 @@ break-glass before CI could plan. Resource scope is two specific role ARNs,
 not wildcard. The CD role is already trusted with main branch OIDC — full IAM
 on these two roles does not materially increase the attack surface.
 **Risk:** Accepted. Mitigated by OIDC trust policy scoping to main branch only.
+**Review:** December 2026.
+
+---
+
+## Trivy Exceptions
+
+### AVD-AWS-0132 — S3 KMS Customer Managed Key
+**Resource:** `aparcar-terraform-state-022079552075`
+**Reason:** Same as CKV_AWS_145 above. Trivy and Checkov flag the same
+underlying issue with different identifiers.
+**Risk:** Low. See CKV_AWS_145.
+**Review:** December 2026.
+
+---
+
+### AVD-AWS-0135 — SQS KMS Customer Managed Key
+**Resource:** `module.leave_signal_handler.aws_sqs_queue.dlq`
+**Reason:** Same as CKV2_AWS_73 above.
+**Risk:** Low. See CKV2_AWS_73.
+**Review:** December 2026.
+
+### AVD-AWS-0136 — SNS Topic Not Using Customer Managed Key
+**Resource:** `module.cloudwatch_alarms.aws_sns_topic.alarms`
+**Reason:** CloudWatch alarm notifications topic. A CMK adds $1/month with
+no meaningful security benefit for internal alarm routing. AWS managed key
+provides encryption at rest. Will revisit if compliance requires CMK for
+all SNS topics.
+**Risk:** Low. Topic contains only operational alarm metadata, no PII or
+sensitive data.
 **Review:** December 2026.
 
 ---
