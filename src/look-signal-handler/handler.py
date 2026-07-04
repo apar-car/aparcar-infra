@@ -23,8 +23,7 @@ def get_redis():
     return redis.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
-        ssl=True,
-        ssl_cert_reqs="none",
+        ssl=False,
         decode_responses=True,
         socket_connect_timeout=5,
         socket_timeout=5,
