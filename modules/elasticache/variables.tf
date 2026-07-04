@@ -3,7 +3,7 @@ variable "environment" {
 }
 
 variable "project" {
-  type    = string 
+  type    = string
   default = "aparcar"
 }
 
@@ -16,7 +16,7 @@ variable "subnet_ids" {
 }
 
 variable "allowed_security_group_ids" {
-  type        = list(string) 
+  type        = list(string)
   description = "Security group IDs allowed to connect to Redis"
   default     = []
 }

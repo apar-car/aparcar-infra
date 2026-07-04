@@ -56,7 +56,7 @@ module "parking_signals_table" {
 }
 
 module "github_oidc" {
-  source = "../../modules/github-oidc"
+  source       = "../../modules/github-oidc"
   environment  = "dev"
   project      = "aparcar"
   account_id   = "945475931696"
