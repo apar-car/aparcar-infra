@@ -81,6 +81,7 @@ module "appsync" {
   leave_signal_handler_arn   = module.leave_signal_handler.function_arn
   parking_signals_table_arn  = module.parking_signals_table.table_arn
   parking_signals_table_name = module.parking_signals_table.table_name
+  look_signal_handler_arn    = module.look_signal_handler.function_arn
 }
 
 module "cloudwatch_alarms" {
