@@ -1,7 +1,7 @@
-import json
 import os
 import uuid
 import time
+import ssl
 import socket
 import boto3
 import redis
@@ -15,24 +15,6 @@ REDIS_HOST    = os.environ["REDIS_HOST"]
 REDIS_PORT    = int(os.environ.get("REDIS_PORT", 6379))
 
 LOOK_TTL_SECONDS = 1800  # 30 minutes
-
-# ─── Redis connection ──────────────────────────────────────────────────────────
-
-from redis.connection import SSLConnection, ConnectionPool
-import ssl
-
-def get_redis():
-    pool = ConnectionPool(
-        connection_class=SSLConnection,
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        ssl_cert_reqs=ssl.CERT_NONE,
-        ssl_check_hostname=False,
-        decode_responses=True,
-        socket_connect_timeout=5,
-        socket_timeout=5,
-    )
-    return redis.Redis(connection_pool=pool)
 
 # ─── Handler ──────────────────────────────────────────────────────────────────
 
@@ -64,13 +46,38 @@ def handler(event, context):
         ip = socket.gethostbyname(REDIS_HOST)
         print(f"[DEBUG] Resolved to {ip}")
 
-        # ── Write to Redis GEOSEARCH index ──
-        r = get_redis()
+        # ── Raw SSL handshake test ──
+        print("[DEBUG] Testing SSL handshake")
+        try:
+            context = ssl.create_default_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            raw_sock = socket.create_connection((REDIS_HOST, REDIS_PORT), timeout=5)
+            ssl_sock = context.wrap_socket(raw_sock, server_hostname=REDIS_HOST)
+            print(f"[DEBUG] SSL handshake OK, cipher: {ssl_sock.cipher()}")
+            ssl_sock.close()
+        except Exception as e:
+            print(f"[ERROR] SSL handshake failed: {e}")
+            return {"success": False, "lookId": None, "error": f"SSL: {e}"}
+
+        # ── Redis connection ──
+        from redis.connection import SSLConnection, ConnectionPool
+        pool = ConnectionPool(
+            connection_class=SSLConnection,
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            ssl_cert_reqs=ssl.CERT_NONE,
+            ssl_check_hostname=False,
+            decode_responses=True,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+        )
+        r = redis.Redis(connection_pool=pool)
+
         redis_key = "aparcar:looking:drivers"
         r.geoadd(redis_key, [lng, lat, user_id])
         r.expire(redis_key, LOOK_TTL_SECONDS)
 
-        # Store per-user metadata for radius lookup
         user_key = f"aparcar:looking:meta:{user_id}"
         r.hset(user_key, mapping={
             "lookId":        look_id,
