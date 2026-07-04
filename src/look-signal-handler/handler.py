@@ -4,7 +4,6 @@ import time
 import ssl
 import socket
 import boto3
-import redis
 
 # ─── Clients ──────────────────────────────────────────────────────────────────
 
@@ -15,6 +14,74 @@ REDIS_HOST    = os.environ["REDIS_HOST"]
 REDIS_PORT    = int(os.environ.get("REDIS_PORT", 6379))
 
 LOOK_TTL_SECONDS = 1800  # 30 minutes
+
+# ─── Redis over raw SSL ────────────────────────────────────────────────────────
+
+class RawRedis:
+    """Minimal Redis client over a raw SSL socket."""
+
+    def __init__(self, host, port, timeout=5):
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        raw = socket.create_connection((host, port), timeout=timeout)
+        self._sock = context.wrap_socket(raw, server_hostname=host)
+        self._sock.settimeout(timeout)
+        self._buf = b""
+
+    def _send(self, *args):
+        cmd = f"*{len(args)}\r\n"
+        for a in args:
+            s = str(a)
+            cmd += f"${len(s.encode())}\r\n{s}\r\n"
+        self._sock.sendall(cmd.encode())
+
+    def _read_line(self):
+        while b"\r\n" not in self._buf:
+            self._buf += self._sock.recv(4096)
+        line, self._buf = self._buf.split(b"\r\n", 1)
+        return line.decode()
+
+    def _read_response(self):
+        line = self._read_line()
+        if line.startswith("+"):
+            return line[1:]
+        if line.startswith(":"):
+            return int(line[1:])
+        if line.startswith("-"):
+            raise Exception(f"Redis error: {line[1:]}")
+        if line.startswith("$"):
+            n = int(line[1:])
+            if n == -1:
+                return None
+            while len(self._buf) < n + 2:
+                self._buf += self._sock.recv(4096)
+            data, self._buf = self._buf[:n], self._buf[n+2:]
+            return data.decode()
+        if line.startswith("*"):
+            n = int(line[1:])
+            return [self._read_response() for _ in range(n)]
+        raise Exception(f"Unknown response: {line}")
+
+    def execute(self, *args):
+        self._send(*args)
+        return self._read_response()
+
+    def geoadd(self, key, lng, lat, member):
+        return self.execute("GEOADD", key, lng, lat, member)
+
+    def expire(self, key, seconds):
+        return self.execute("EXPIRE", key, seconds)
+
+    def hset(self, key, mapping):
+        args = ["HSET", key]
+        for k, v in mapping.items():
+            args += [k, v]
+        return self.execute(*args)
+
+    def close(self):
+        self._sock.close()
+
 
 # ─── Handler ──────────────────────────────────────────────────────────────────
 
@@ -41,54 +108,23 @@ def handler(event, context):
         now        = int(time.time())
         expires_at = now + LOOK_TTL_SECONDS
 
-        # ── DNS check ──
-        print(f"[DEBUG] Resolving {REDIS_HOST}")
-        ip = socket.gethostbyname(REDIS_HOST)
-        print(f"[DEBUG] Resolved to {ip}")
-
-        # ── Raw SSL handshake test ──
-        print("[DEBUG] Testing SSL handshake")
+        # ── Redis ──
+        r = RawRedis(REDIS_HOST, REDIS_PORT)
         try:
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            raw_sock = socket.create_connection((REDIS_HOST, REDIS_PORT), timeout=5)
-            ssl_sock = context.wrap_socket(raw_sock, server_hostname=REDIS_HOST)
-            print(f"[DEBUG] SSL handshake OK, cipher: {ssl_sock.cipher()}")
-            ssl_sock.close()
-        except Exception as e:
-            print(f"[ERROR] SSL handshake failed: {e}")
-            return {"success": False, "lookId": None, "error": f"SSL: {e}"}
+            r.geoadd("aparcar:looking:drivers", lng, lat, user_id)
+            r.expire("aparcar:looking:drivers", LOOK_TTL_SECONDS)
+            r.hset(f"aparcar:looking:meta:{user_id}", {
+                "lookId":        look_id,
+                "radius_meters": str(radius_meters),
+                "lat":           str(lat),
+                "lng":           str(lng),
+                "registeredAt":  str(now),
+            })
+            r.expire(f"aparcar:looking:meta:{user_id}", LOOK_TTL_SECONDS)
+        finally:
+            r.close()
 
-        # ── Redis connection ──
-        from redis.connection import SSLConnection, ConnectionPool
-        pool = ConnectionPool(
-            connection_class=SSLConnection,
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            ssl_cert_reqs=ssl.CERT_NONE,
-            ssl_check_hostname=False,
-            decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5,
-        )
-        r = redis.Redis(connection_pool=pool)
-
-        redis_key = "aparcar:looking:drivers"
-        r.geoadd(redis_key, [lng, lat, user_id])
-        r.expire(redis_key, LOOK_TTL_SECONDS)
-
-        user_key = f"aparcar:looking:meta:{user_id}"
-        r.hset(user_key, mapping={
-            "lookId":        look_id,
-            "radius_meters": str(radius_meters),
-            "lat":           str(lat),
-            "lng":           str(lng),
-            "registeredAt":  str(now),
-        })
-        r.expire(user_key, LOOK_TTL_SECONDS)
-
-        # ── Write to DynamoDB ──
+        # ── DynamoDB ──
         table = dynamodb.Table(PARKING_TABLE)
         table.put_item(Item={
             "signalId":     look_id,
