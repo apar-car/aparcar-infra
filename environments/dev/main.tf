@@ -101,4 +101,72 @@ module "elasticache" {
   project     = "aparcar"
   vpc_id      = module.vpc.vpc_id
   subnet_ids  = module.vpc.private_subnet_ids
+  vpc_cidr    = "10.16.0.0/16"
+}
+
+# Shared security group for VPC-bound Lambdas
+resource "aws_security_group" "lambda_vpc" {
+  name        = "aparcar-dev-lambda-vpc-sg"
+  description = "Security group for VPC-bound Lambda functions"
+  vpc_id      = module.vpc.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [module.vpc.vpc_cidr]
+    description = "Allow outbound to VPC"
+  }
+
+  tags = {
+    Name        = "aparcar-dev-lambda-vpc-sg"
+    Environment = "dev"
+    Project     = "aparcar"
+    ManagedBy   = "terraform"
+  }
+}
+
+# Archive for look-signal-handler
+data "archive_file" "look_signal_handler" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/look-signal-handler"
+  output_path = "${path.root}/builds/look-signal-handler.zip"
+}
+
+module "look_signal_handler" {
+  source = "../../modules/lambda"
+
+  function_name                  = "look-signal-handler"
+  zip_path                       = data.archive_file.look_signal_handler.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+  subnet_ids                     = module.vpc.private_subnet_ids
+  security_group_ids             = [aws_security_group.lambda_vpc.id]
+
+  environment_variables = {
+    PARKING_TABLE  = "aparcar-dev-parking-signals"
+    REDIS_HOST     = module.elasticache.redis_endpoint
+    REDIS_PORT     = "6379"
+  }
+
+  policy_statements = [
+    {
+      effect    = "Allow"
+      actions   = ["dynamodb:PutItem", "dynamodb:GetItem"]
+      resources = ["arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-parking-signals"]
+    }
+  ]
+}
+
+resource "aws_security_group_rule" "redis_from_lambda" {
+  type                     = "ingress"
+  from_port                = 6379
+  to_port                  = 6379
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lambda_vpc.id
+  security_group_id        = module.elasticache.redis_security_group_id
+  description              = "Redis access from VPC Lambda functions"
 }
