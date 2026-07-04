@@ -185,6 +185,16 @@ on these two roles does not materially increase the attack surface.
 **Risk:** Accepted. Mitigated by OIDC trust policy scoping to main branch only.
 **Review:** December 2026.
 
+### CKV_AWS_134 — ElastiCache Automatic Backup
+**Resource:** `module.elasticache.aws_elasticache_cluster.main`
+**Reason:** Redis is used exclusively as a geospatial cache, not a database. All data
+is ephemeral — looking driver positions with a 30-minute TTL. If the cluster is lost,
+data regenerates automatically as drivers re-register. Backup adds ~€1-2/month with
+zero recovery value for a cache workload.
+**Risk:** None. Loss of Redis data causes a brief gap in radius matching (seconds to
+minutes) until drivers re-register. No user data is lost.
+**Review:** December 2026. Reassess if Redis is used to store non-ephemeral data.
+
 ---
 
 ## Trivy Exceptions
