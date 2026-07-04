@@ -17,3 +17,7 @@ output "nat_gateway_id" {
   description = "NAT Gateway ID (empty if not enabled)"
   value       = length(aws_nat_gateway.main) > 0 ? aws_nat_gateway.main[0].id : null
 }
+
+output "vpc_cidr" {
+  value = aws_vpc.main.cidr_block
+}
