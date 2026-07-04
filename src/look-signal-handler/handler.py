@@ -19,11 +19,14 @@ LOOK_TTL_SECONDS = 1800  # 30 minutes
 
 # ─── Redis connection ──────────────────────────────────────────────────────────
 
+import ssl
+
 def get_redis():
     return redis.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
-        ssl=False,
+        ssl=True,
+        ssl_cert_reqs=ssl.CERT_NONE,
         decode_responses=True,
         socket_connect_timeout=5,
         socket_timeout=5,
