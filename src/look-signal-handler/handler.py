@@ -2,7 +2,6 @@ import json
 import os
 import uuid
 import time
-import ssl
 import socket
 import boto3
 import redis
@@ -19,20 +18,21 @@ LOOK_TTL_SECONDS = 1800  # 30 minutes
 
 # ─── Redis connection ──────────────────────────────────────────────────────────
 
-def get_redis():
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
+from redis.connection import SSLConnection, ConnectionPool
+import ssl
 
-    return redis.Redis(
+def get_redis():
+    pool = ConnectionPool(
+        connection_class=SSLConnection,
         host=REDIS_HOST,
         port=REDIS_PORT,
-        ssl=True,
-        ssl_context=ssl_context,
+        ssl_cert_reqs=ssl.CERT_NONE,
+        ssl_check_hostname=False,
         decode_responses=True,
         socket_connect_timeout=5,
         socket_timeout=5,
     )
+    return redis.Redis(connection_pool=pool)
 
 # ─── Handler ──────────────────────────────────────────────────────────────────
 
