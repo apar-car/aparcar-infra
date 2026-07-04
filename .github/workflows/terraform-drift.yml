@@ -51,6 +51,8 @@ jobs:
         if: steps.plan.outputs.exitcode == '2'
         uses: slackapi/slack-github-action@v3.0.3
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "text": "⚠️ *Infrastructure Drift Detected* in AparCar Dev\nTerraform detected differences between state and real infrastructure.\n*Action required:* Review and apply or investigate manual changes.\n*Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -63,6 +65,8 @@ jobs:
         if: steps.plan.outputs.exitcode == '0'
         uses: slackapi/slack-github-action@v3.0.3
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "text": "✅ *No Infrastructure Drift* detected in AparCar Dev\nAll infrastructure matches Terraform state."
