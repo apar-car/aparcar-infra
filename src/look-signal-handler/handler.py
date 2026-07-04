@@ -3,28 +3,25 @@ import uuid
 import time
 import ssl
 import socket
+import urllib3
 import boto3
-from botocore.config import Config
-import botocore
 
-PARKING_TABLE      = os.environ["PARKING_TABLE"]
-REDIS_HOST         = os.environ["REDIS_HOST"]
-REDIS_PORT         = int(os.environ.get("REDIS_PORT", 6379))
-DYNAMODB_ENDPOINT  = os.environ.get("DYNAMODB_ENDPOINT", "")
-LOOK_TTL_SECONDS   = 1800
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+PARKING_TABLE     = os.environ["PARKING_TABLE"]
+REDIS_HOST        = os.environ["REDIS_HOST"]
+REDIS_PORT        = int(os.environ.get("REDIS_PORT", 6379))
+DYNAMODB_ENDPOINT = os.environ.get("DYNAMODB_ENDPOINT", "")
+LOOK_TTL_SECONDS  = 1800
 
 
 class RawRedis:
     def __init__(self, host, port, timeout=5):
-        print(f"[DEBUG] RawRedis connecting to {host}:{port}")
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
-        print("[DEBUG] SSL context created")
         raw = socket.create_connection((host, port), timeout=timeout)
-        print("[DEBUG] TCP connected")
         self._sock = context.wrap_socket(raw, server_hostname=host)
-        print("[DEBUG] SSL handshake complete")
         self._sock.settimeout(timeout)
         self._buf = b""
 
@@ -83,7 +80,6 @@ class RawRedis:
 
 
 def handler(event, context):
-    print("[DEBUG] handler called")
     try:
         args = event.get("arguments", {})
 
@@ -106,13 +102,13 @@ def handler(event, context):
         expires_at = now + LOOK_TTL_SECONDS
 
         # ── Redis ──
-        print("[DEBUG] Creating RawRedis")
+        import socket
+        ip = socket.gethostbyname("dynamodb.eu-west-1.amazonaws.com")
+        print(f"[DEBUG] DynamoDB resolves to: {ip}")
         r = RawRedis(REDIS_HOST, REDIS_PORT)
         try:
-            print("[DEBUG] GEOADD")
             r.geoadd("aparcar:looking:drivers", lng, lat, user_id)
             r.expire("aparcar:looking:drivers", LOOK_TTL_SECONDS)
-            print("[DEBUG] HSET")
             r.hset(f"aparcar:looking:meta:{user_id}", {
                 "lookId":        look_id,
                 "radius_meters": str(radius_meters),
@@ -121,12 +117,10 @@ def handler(event, context):
                 "registeredAt":  str(now),
             })
             r.expire(f"aparcar:looking:meta:{user_id}", LOOK_TTL_SECONDS)
-            print("[DEBUG] Redis done")
         finally:
             r.close()
 
         # ── DynamoDB ──
-        print(f"[DEBUG] DynamoDB write via {DYNAMODB_ENDPOINT or 'default'}")
         ddb = boto3.resource(
             "dynamodb",
             region_name="eu-west-1",
@@ -146,7 +140,6 @@ def handler(event, context):
             "ttl":          expires_at,
         })
 
-        print("[DEBUG] Success")
         return {
             "success": True,
             "lookId":  look_id,
