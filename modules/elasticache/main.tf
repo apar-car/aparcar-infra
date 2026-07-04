@@ -38,17 +38,20 @@ resource "aws_elasticache_subnet_group" "main" {
   }
 }
 
-resource "aws_elasticache_cluster" "main" {
-  cluster_id                 = "${var.project}-${var.environment}-redis"
-  engine                     = "redis"
-  node_type                  = "cache.t3.micro"
-  num_cache_nodes            = 1
-  parameter_group_name       = "default.redis7"
-  engine_version             = "7.1"
-  port                       = 6379
-  subnet_group_name          = aws_elasticache_subnet_group.main.name
-  security_group_ids         = [aws_security_group.redis.id]
+resource "aws_elasticache_replication_group" "main" {
+  replication_group_id = "${var.project}-${var.environment}-redis"
+  description          = "AparCar ${var.environment} Redis cluster for geospatial radius matching"
+
+  node_type               = "cache.t3.micro"
+  num_cache_clusters      = 1
+  parameter_group_name    = "default.redis7"
+  engine_version          = "7.1"
+  port                    = 6379
+  subnet_group_name       = aws_elasticache_subnet_group.main.name
+  security_group_ids      = [aws_security_group.redis.id]
   transit_encryption_enabled = true
+  at_rest_encryption_enabled = true
+  automatic_failover_enabled = false
 
   tags = {
     Name        = "${var.project}-${var.environment}-redis"
