@@ -3,7 +3,6 @@ import uuid
 import time
 import ssl
 import socket
-
 import boto3
 
 PARKING_TABLE    = os.environ["PARKING_TABLE"]
@@ -123,8 +122,26 @@ def handler(event, context):
         finally:
             r.close()
 
-        # ── DynamoDB — skip for now to confirm hang location ──
-        print("[DEBUG] Skipping DynamoDB write (test)")
+        # ── DynamoDB ──
+        print("[DEBUG] DynamoDB write")
+        ddb = boto3.resource(
+            "dynamodb",
+            region_name="eu-west-1",
+            endpoint_url="https://dynamodb.eu-west-1.amazonaws.com"
+        )
+        ddb.Table(PARKING_TABLE).put_item(Item={
+            "signalId":     look_id,
+            "userId":       user_id,
+            "type":         "LOOKING",
+            "lat":          str(lat),
+            "lng":           str(lng),
+            "radiusMeters": radius_meters,
+            "status":       "ACTIVE",
+            "createdAt":    str(now),
+            "expiresAt":    expires_at,
+            "ttl":          expires_at,
+        })
+
         print("[DEBUG] Success")
         return {
             "success": True,
