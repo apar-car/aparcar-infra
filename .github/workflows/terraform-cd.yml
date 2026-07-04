@@ -45,6 +45,11 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Install Lambda dependencies
+        run: |
+          pip install -r src/look-signal-handler/requirements.txt \
+          -t src/look-signal-handler/ --break-system-packages
+
       - name: Terraform Init
         working-directory: environments/dev
         run: terraform init -backend-config=backend.hcl

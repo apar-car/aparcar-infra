@@ -13,3 +13,7 @@
 Thumbs.db
 *.zip
 environments/*/builds/*.zip
+src/*/redis
+src/*/redis-*.dist-info
+src/*/*.dist-info
+src/*/__pycache__
