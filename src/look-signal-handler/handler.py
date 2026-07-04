@@ -4,7 +4,7 @@ import uuid
 import time
 import boto3
 import redis
-
+import socket
 
 # ─── Clients ──────────────────────────────────────────────────────────────────
 
@@ -56,6 +56,14 @@ def handler(event, context):
         expires_at = now + LOOK_TTL_SECONDS
 
         # ── Write to Redis GEOSEARCH index ──
+        print(f"[DEBUG] Resolving {REDIS_HOST}")
+        try:
+            ip = socket.gethostbyname(REDIS_HOST)
+            print(f"[DEBUG] Resolved to {ip}")
+        except Exception as e:
+            print(f"[ERROR] DNS failed: {e}")
+            return {"success": False, "lookId": None, "error": f"DNS: {e}"}
+        
         r = get_redis()
         redis_key = "aparcar:looking:drivers"
         r.geoadd(redis_key, [lng, lat, user_id])
