@@ -240,3 +240,48 @@ resource "aws_flow_log" "main" {
     ManagedBy   = "terraform"
   }
 }
+
+resource "aws_vpc_endpoint" "dynamodb_interface" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.region}.dynamodb"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name        = "${var.project}-${var.environment}-dynamodb-interface-endpoint"
+    Environment = var.environment
+    Project     = var.project
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_security_group" "vpc_endpoint" {
+  name        = "${var.project}-${var.environment}-vpc-endpoint-sg"
+  description = "Allow HTTPS from VPC for Interface Endpoints"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "HTTPS from VPC"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Allow outbound within VPC"
+  }
+
+  tags = {
+    Name        = "${var.project}-${var.environment}-vpc-endpoint-sg"
+    Environment = var.environment
+    Project     = var.project
+    ManagedBy   = "terraform"
+  }
+}
