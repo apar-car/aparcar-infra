@@ -151,6 +151,7 @@ module "look_signal_handler" {
     PARKING_TABLE = "aparcar-dev-parking-signals"
     REDIS_HOST    = module.elasticache.redis_endpoint
     REDIS_PORT    = "6379"
+    DYNAMODB_ENDPOINT   = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [

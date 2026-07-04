@@ -22,3 +22,8 @@ output "vpc_cidr" {
   description = "VPC CIDR block"
   value       = aws_vpc.main.cidr_block
 }
+
+output "dynamodb_endpoint_url" {
+  description = "DynamoDB Interface Endpoint DNS name"
+  value       = "https://${aws_vpc_endpoint.dynamodb_interface.dns_entry[0]["dns_name"]}"
+}

@@ -247,7 +247,6 @@ resource "aws_vpc_endpoint" "dynamodb_interface" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoint.id]
-  private_dns_enabled = true
 
   tags = {
     Name        = "${var.project}-${var.environment}-dynamodb-interface-endpoint"
