@@ -83,7 +83,7 @@ resource "aws_iam_role_policy" "appsync_lambda" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["lambda:InvokeFunction"]
-      Resource = var.leave_signal_handler_arn
+      Resource = "arn:aws:lambda:eu-west-1:*:function:${var.project}-${var.environment}-*"
     }]
   })
 }
