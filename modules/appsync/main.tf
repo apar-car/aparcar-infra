@@ -191,18 +191,20 @@ resource "aws_appsync_resolver" "register_looking_driver" {
   api_id      = aws_appsync_graphql_api.main.id
   type        = "Mutation"
   field       = "registerLookingDriver"
-  data_source = aws_appsync_datasource.none.name
+  data_source = aws_appsync_datasource.look_signal_handler.name
 
-  request_template = jsonencode({
-    version = "2018-05-29"
-    payload = {}
-  })
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "Invoke",
+      "payload": {
+        "field": "registerLookingDriver",
+        "arguments": $util.toJson($ctx.args)
+      }
+    }
+  EOT
 
-  response_template = jsonencode({
-    success = true
-    lookId  = "stub-look-id"
-  })
-
+  response_template = "$util.toJson($ctx.result)"
 }
 
 # Stub resolver — requestSpot
@@ -296,4 +298,15 @@ resource "aws_appsync_resolver" "get_signal" {
 
   response_template = "$util.toJson($ctx.result)"
 
+}
+
+resource "aws_appsync_datasource" "look_signal_handler" {
+  api_id           = aws_appsync_graphql_api.main.id
+  name             = "LookSignalHandler"
+  type             = "AWS_LAMBDA"
+  service_role_arn = aws_iam_role.appsync_lambda.arn
+
+  lambda_config {
+    function_arn = var.look_signal_handler_arn
+  }
 }

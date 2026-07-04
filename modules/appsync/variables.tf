@@ -29,3 +29,8 @@ variable "api_key_expiry_days" {
   type        = number
   default     = 365
 }
+
+variable "look_signal_handler_arn" {
+  description = "ARN of the look-signal-handler Lambda"
+  type        = string
+}
