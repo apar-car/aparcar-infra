@@ -20,3 +20,8 @@ variable "allowed_security_group_ids" {
   description = "Security group IDs allowed to connect to Redis"
   default     = []
 }
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block for egress restriction"
+  type        = string
+}

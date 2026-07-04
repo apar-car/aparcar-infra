@@ -195,6 +195,28 @@ zero recovery value for a cache workload.
 minutes) until drivers re-register. No user data is lost.
 **Review:** December 2026. Reassess if Redis is used to store non-ephemeral data.
 
+### CKV_AWS_31 — ElastiCache AUTH token
+**Resource:** `module.elasticache.aws_elasticache_replication_group.main`
+**Reason:** Dev environment. Network-level access control via SG restricts Redis
+to Lambda SG only. AUTH token deferred to prod where it will be stored in
+Secrets Manager. Risk accepted for dev pilot.
+**Review:** Before prod launch.
+
+### CKV_AWS_191 — ElastiCache customer-managed KMS key
+**Resource:** `module.elasticache.aws_elasticache_replication_group.main`
+**Reason:** Redis holds ephemeral geospatial cache data with 30-minute TTL.
+AWS-managed encryption at rest provides adequate protection for this data
+classification. CMK adds operational complexity (key rotation, access policies)
+with no meaningful security improvement for cache data at pilot scale.
+**Review:** December 2026.
+
+### CKV2_AWS_50 — ElastiCache Multi-AZ failover
+**Resource:** `module.elasticache.aws_elasticache_replication_group.main`
+**Reason:** Single-node dev cluster. Multi-AZ requires minimum 2 nodes (~€26/month
+additional cost). Redis holds ephemeral cache data — downtime causes a brief gap
+in radius matching until drivers re-register. Acceptable for pilot.
+**Review:** Before prod launch.
+
 ---
 
 ## Trivy Exceptions
