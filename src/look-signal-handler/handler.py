@@ -18,14 +18,16 @@ LOOK_TTL_SECONDS = 1800  # 30 minutes
 # ─── Redis over raw SSL ────────────────────────────────────────────────────────
 
 class RawRedis:
-    """Minimal Redis client over a raw SSL socket."""
-
     def __init__(self, host, port, timeout=5):
+        print(f"[DEBUG] RawRedis connecting to {host}:{port}")
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
+        print("[DEBUG] SSL context created")
         raw = socket.create_connection((host, port), timeout=timeout)
+        print("[DEBUG] TCP connected")
         self._sock = context.wrap_socket(raw, server_hostname=host)
+        print("[DEBUG] SSL handshake complete")
         self._sock.settimeout(timeout)
         self._buf = b""
 
@@ -86,6 +88,7 @@ class RawRedis:
 # ─── Handler ──────────────────────────────────────────────────────────────────
 
 def handler(event, context):
+    print("[DEBUG] handler called")
     try:
         args = event.get("arguments", {})
 
@@ -109,10 +112,13 @@ def handler(event, context):
         expires_at = now + LOOK_TTL_SECONDS
 
         # ── Redis ──
+        print("[DEBUG] Creating RawRedis")
         r = RawRedis(REDIS_HOST, REDIS_PORT)
         try:
+            print("[DEBUG] GEOADD")
             r.geoadd("aparcar:looking:drivers", lng, lat, user_id)
             r.expire("aparcar:looking:drivers", LOOK_TTL_SECONDS)
+            print("[DEBUG] HSET")
             r.hset(f"aparcar:looking:meta:{user_id}", {
                 "lookId":        look_id,
                 "radius_meters": str(radius_meters),
@@ -121,10 +127,12 @@ def handler(event, context):
                 "registeredAt":  str(now),
             })
             r.expire(f"aparcar:looking:meta:{user_id}", LOOK_TTL_SECONDS)
+            print("[DEBUG] Redis done")
         finally:
             r.close()
 
         # ── DynamoDB ──
+        print("[DEBUG] DynamoDB write")
         table = dynamodb.Table(PARKING_TABLE)
         table.put_item(Item={
             "signalId":     look_id,
@@ -139,6 +147,7 @@ def handler(event, context):
             "ttl":          expires_at,
         })
 
+        print("[DEBUG] Success")
         return {
             "success": True,
             "lookId":  look_id,
@@ -151,4 +160,4 @@ def handler(event, context):
             "success": False,
             "lookId":  None,
             "error":   str(e),
-        }# v1783194857
+        }
