@@ -5,17 +5,11 @@ import ssl
 import socket
 import boto3
 
-# ─── Clients ──────────────────────────────────────────────────────────────────
+PARKING_TABLE    = os.environ["PARKING_TABLE"]
+REDIS_HOST       = os.environ["REDIS_HOST"]
+REDIS_PORT       = int(os.environ.get("REDIS_PORT", 6379))
+LOOK_TTL_SECONDS = 1800
 
-dynamodb = boto3.resource("dynamodb", region_name="eu-west-1")
-
-PARKING_TABLE = os.environ["PARKING_TABLE"]
-REDIS_HOST    = os.environ["REDIS_HOST"]
-REDIS_PORT    = int(os.environ.get("REDIS_PORT", 6379))
-
-LOOK_TTL_SECONDS = 1800  # 30 minutes
-
-# ─── Redis over raw SSL ────────────────────────────────────────────────────────
 
 class RawRedis:
     def __init__(self, host, port, timeout=5):
@@ -85,8 +79,6 @@ class RawRedis:
         self._sock.close()
 
 
-# ─── Handler ──────────────────────────────────────────────────────────────────
-
 def handler(event, context):
     print("[DEBUG] handler called")
     try:
@@ -97,7 +89,6 @@ def handler(event, context):
         lng           = args.get("lng")
         radius_meters = args.get("radius_meters", 500)
 
-        # Validate
         if not all([user_id, lat is not None, lng is not None]):
             return {"success": False, "lookId": None, "error": "Missing required fields"}
 
@@ -131,10 +122,10 @@ def handler(event, context):
         finally:
             r.close()
 
-        # ── DynamoDB ──
+        # ── DynamoDB (initialized inside handler) ──
         print("[DEBUG] DynamoDB write")
-        table = dynamodb.Table(PARKING_TABLE)
-        table.put_item(Item={
+        ddb = boto3.resource("dynamodb", region_name="eu-west-1")
+        ddb.Table(PARKING_TABLE).put_item(Item={
             "signalId":     look_id,
             "userId":       user_id,
             "type":         "LOOKING",
