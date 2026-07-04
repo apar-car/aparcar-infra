@@ -12,7 +12,6 @@ dynamodb = boto3.resource("dynamodb", region_name="eu-west-1")
 
 
 PARKING_TABLE = os.environ["PARKING_TABLE"]
-EVENT_BUS_NAME = os.environ["EVENT_BUS_NAME"]
 REDIS_HOST = os.environ["REDIS_HOST"]
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 
