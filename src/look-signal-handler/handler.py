@@ -5,10 +5,11 @@ import ssl
 import socket
 import boto3
 
-PARKING_TABLE    = os.environ["PARKING_TABLE"]
-REDIS_HOST       = os.environ["REDIS_HOST"]
-REDIS_PORT       = int(os.environ.get("REDIS_PORT", 6379))
-LOOK_TTL_SECONDS = 1800
+PARKING_TABLE      = os.environ["PARKING_TABLE"]
+REDIS_HOST         = os.environ["REDIS_HOST"]
+REDIS_PORT         = int(os.environ.get("REDIS_PORT", 6379))
+DYNAMODB_ENDPOINT  = os.environ.get("DYNAMODB_ENDPOINT", "")
+LOOK_TTL_SECONDS   = 1800
 
 
 class RawRedis:
@@ -123,18 +124,18 @@ def handler(event, context):
             r.close()
 
         # ── DynamoDB ──
-        print("[DEBUG] DynamoDB write")
+        print(f"[DEBUG] DynamoDB write via {DYNAMODB_ENDPOINT or 'default'}")
         ddb = boto3.resource(
             "dynamodb",
             region_name="eu-west-1",
-            endpoint_url="https://dynamodb.eu-west-1.amazonaws.com"
+            endpoint_url=DYNAMODB_ENDPOINT if DYNAMODB_ENDPOINT else None,
         )
         ddb.Table(PARKING_TABLE).put_item(Item={
             "signalId":     look_id,
             "userId":       user_id,
             "type":         "LOOKING",
             "lat":          str(lat),
-            "lng":           str(lng),
+            "lng":          str(lng),
             "radiusMeters": radius_meters,
             "status":       "ACTIVE",
             "createdAt":    str(now),
