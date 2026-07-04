@@ -34,21 +34,22 @@ jobs:
       - name: Configure Git for module downloads
         run: git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
+      - name: Install Lambda dependencies
+        run: |
+          pip install -r src/look-signal-handler/requirements.txt \
+          -t src/look-signal-handler/ --break-system-packages
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::945475931696:role/GitHubActions-TerraformCD
           aws-region: ${{ env.AWS_REGION }}
 
+          
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Install Lambda dependencies
-        run: |
-          pip install -r src/look-signal-handler/requirements.txt \
-          -t src/look-signal-handler/ --break-system-packages
 
       - name: Terraform Init
         working-directory: environments/dev
