@@ -26,6 +26,8 @@ def get_redis():
         ssl=True,
         ssl_cert_reqs="none",
         decode_responses=True,
+        socket_connect_timeout=5,
+        socket_timeout=5,
     )
 
 # ─── Handler ──────────────────────────────────────────────────────────────────
