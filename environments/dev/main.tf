@@ -94,3 +94,11 @@ module "cloudwatch_alarms" {
   appsync_api_id       = module.appsync.api_id
 }
 
+module "elasticache" {
+  source = "../../modules/elasticache"
+
+  environment = "dev"
+  project     = "aparcar"
+  vpc_id      = module.vpc.vpc_id
+  subnet_ids  = module.vpc.private_subnet_ids
+}
