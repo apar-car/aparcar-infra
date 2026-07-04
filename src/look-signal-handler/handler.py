@@ -4,6 +4,8 @@ import time
 import ssl
 import socket
 import boto3
+from botocore.config import Config
+import botocore
 
 PARKING_TABLE      = os.environ["PARKING_TABLE"]
 REDIS_HOST         = os.environ["REDIS_HOST"]
@@ -129,6 +131,7 @@ def handler(event, context):
             "dynamodb",
             region_name="eu-west-1",
             endpoint_url=DYNAMODB_ENDPOINT if DYNAMODB_ENDPOINT else None,
+            verify=False,
         )
         ddb.Table(PARKING_TABLE).put_item(Item={
             "signalId":     look_id,
