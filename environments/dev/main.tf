@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=6dccf200fb84432260d3d25746f4639ffffa22d6"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=70ea4d903728a475f009f1ce2e4132604e288911"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -18,7 +18,7 @@ data "archive_file" "leave_signal_handler" {
 
 
 module "leave_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=6dccf200fb84432260d3d25746f4639ffffa22d6"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=70ea4d903728a475f009f1ce2e4132604e288911"
 
   function_name                  = "leave-signal-handler"
   zip_path                       = data.archive_file.leave_signal_handler.output_path
@@ -48,7 +48,7 @@ module "leave_signal_handler" {
 }
 
 module "parking_signals_table" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=6dccf200fb84432260d3d25746f4639ffffa22d6"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=70ea4d903728a475f009f1ce2e4132604e288911"
 
   table_name  = "parking-signals"
   environment = "dev"
@@ -56,8 +56,7 @@ module "parking_signals_table" {
 }
 
 module "github_oidc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/github-oidc?ref=6dccf200fb84432260d3d25746f4639ffffa22d6"
-
+  source = "../../modules/github-oidc"
   environment  = "dev"
   project      = "aparcar"
   account_id   = "945475931696"
@@ -95,20 +94,3 @@ module "cloudwatch_alarms" {
   appsync_api_id       = module.appsync.api_id
 }
 
-resource "aws_iam_role_policy" "cd_iam_bootstrap" {
-  name = "CDRoleIAMBootstrap"
-  role = "GitHubActions-TerraformCD"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid    = "ManageOwnPolicy"
-      Effect = "Allow"
-      Action = ["iam:*"]
-      Resource = [
-        "arn:aws:iam::945475931696:role/GitHubActions-TerraformCI",
-        "arn:aws:iam::945475931696:role/GitHubActions-TerraformCD",
-      ]
-    }]
-  })
-}
