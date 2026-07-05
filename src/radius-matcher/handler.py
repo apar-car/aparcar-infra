@@ -12,6 +12,7 @@ REDIS_PORT        = int(os.environ.get("REDIS_PORT", 6379))
 DYNAMODB_ENDPOINT = os.environ.get("DYNAMODB_ENDPOINT", "")
 NOTIFIER_ARN      = os.environ["NOTIFICATION_DISPATCHER_ARN"]
 MAX_SEARCH_RADIUS = 5000
+LAMBDA_ENDPOINT = os.environ.get("LAMBDA_ENDPOINT", "")
 
 
 class RawRedis:
@@ -133,7 +134,11 @@ def handler(event, context):
         print(f"[INFO] {len(matched)} drivers matched after radius filter")
 
         # ── Invoke notification-dispatcher synchronously ──
-        lambda_client = boto3.client("lambda", region_name="eu-west-1")
+        lambda_client = boto3.client("lambda", 
+                                     region_name="eu-west-1",
+                                     endpoint_url=LAMBDA_ENDPOINT if LAMBDA_ENDPOINT else None,
+                                     verify=False,
+                                     )
 
         for match in matched:
             payload = {

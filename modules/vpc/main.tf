@@ -284,3 +284,18 @@ resource "aws_security_group" "vpc_endpoint" {
     ManagedBy   = "terraform"
   }
 }
+
+resource "aws_vpc_endpoint" "lambda_interface" {
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${var.region}.lambda"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoint.id]
+
+  tags = {
+    Name        = "${var.project}-${var.environment}-lambda-interface-endpoint"
+    Environment = var.environment
+    Project     = var.project
+    ManagedBy   = "terraform"
+  }
+}

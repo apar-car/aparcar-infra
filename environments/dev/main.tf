@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=d7aa351712756906d4b455e2897c8db2242e4d27"
+  source = "../../modules/vpc"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -222,6 +222,7 @@ module "radius_matcher" {
     REDIS_HOST                  = module.elasticache.redis_endpoint
     REDIS_PORT                  = "6379"
     DYNAMODB_ENDPOINT           = module.vpc.dynamodb_endpoint_url
+    LAMBDA_ENDPOINT             = module.vpc.lambda_endpoint_url
     NOTIFICATION_DISPATCHER_ARN = module.notification_dispatcher.function_arn
   }
 
