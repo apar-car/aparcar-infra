@@ -27,3 +27,8 @@ output "dynamodb_endpoint_url" {
   description = "DynamoDB Interface Endpoint DNS name"
   value       = "https://${aws_vpc_endpoint.dynamodb_interface.dns_entry[0]["dns_name"]}"
 }
+
+output "lambda_endpoint_url" {
+  description = "Lambda Interface Endpoint DNS name"
+  value       = "https://${aws_vpc_endpoint.lambda_interface.dns_entry[0]["dns_name"]}"
+}
