@@ -148,10 +148,10 @@ module "look_signal_handler" {
   security_group_ids             = [aws_security_group.lambda_vpc.id]
 
   environment_variables = {
-    PARKING_TABLE = "aparcar-dev-parking-signals"
-    REDIS_HOST    = module.elasticache.redis_endpoint
-    REDIS_PORT    = "6379"
-    DYNAMODB_ENDPOINT   = module.vpc.dynamodb_endpoint_url
+    PARKING_TABLE     = "aparcar-dev-parking-signals"
+    REDIS_HOST        = module.elasticache.redis_endpoint
+    REDIS_PORT        = "6379"
+    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [
@@ -171,4 +171,98 @@ resource "aws_security_group_rule" "redis_from_lambda" {
   source_security_group_id = aws_security_group.lambda_vpc.id
   security_group_id        = module.elasticache.redis_security_group_id
   description              = "Redis access from VPC Lambda functions"
+}
+
+# Archive for notification-dispatcher
+data "archive_file" "notification_dispatcher" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/notification-dispatcher"
+  output_path = "${path.root}/builds/notification-dispatcher.zip"
+}
+
+module "notification_dispatcher" {
+  source = "../../modules/lambda"
+
+  function_name                  = "notification-dispatcher"
+  zip_path                       = data.archive_file.notification_dispatcher.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+
+  environment_variables = {
+    PARKING_TABLE = "aparcar-dev-parking-signals"
+  }
+
+  policy_statements = []
+}
+
+# Archive for radius-matcher
+data "archive_file" "radius_matcher" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/radius-matcher"
+  output_path = "${path.root}/builds/radius-matcher.zip"
+}
+
+module "radius_matcher" {
+  source = "../../modules/lambda"
+
+  function_name                  = "radius-matcher"
+  zip_path                       = data.archive_file.radius_matcher.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+  subnet_ids                     = module.vpc.private_subnet_ids
+  security_group_ids             = [aws_security_group.lambda_vpc.id]
+
+  environment_variables = {
+    REDIS_HOST                  = module.elasticache.redis_endpoint
+    REDIS_PORT                  = "6379"
+    DYNAMODB_ENDPOINT           = module.vpc.dynamodb_endpoint_url
+    NOTIFICATION_DISPATCHER_ARN = module.notification_dispatcher.function_arn
+  }
+
+  policy_statements = [
+    {
+      effect    = "Allow"
+      actions   = ["lambda:InvokeFunction"]
+      resources = [module.notification_dispatcher.function_arn]
+    }
+  ]
+}
+
+# EventBridge rule — ParkingSpotLeaving → radius-matcher
+resource "aws_cloudwatch_event_rule" "parking_spot_leaving" {
+  name           = "aparcar-dev-parking-spot-leaving"
+  description    = "Route ParkingSpotLeaving events to radius-matcher"
+  event_bus_name = module.eventbridge.event_bus_name
+
+  event_pattern = jsonencode({
+    source      = ["aparcar.leave-signal"]
+    detail-type = ["ParkingSpotLeaving"]
+  })
+
+  tags = {
+    Environment = "dev"
+    Project     = "aparcar"
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_cloudwatch_event_target" "radius_matcher" {
+  rule           = aws_cloudwatch_event_rule.parking_spot_leaving.name
+  event_bus_name = module.eventbridge.event_bus_name
+  target_id      = "radius-matcher"
+  arn            = module.radius_matcher.function_arn
+}
+
+resource "aws_lambda_permission" "eventbridge_radius_matcher" {
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.radius_matcher.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.parking_spot_leaving.arn
 }
