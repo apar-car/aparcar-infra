@@ -148,10 +148,10 @@ module "look_signal_handler" {
   security_group_ids             = [aws_security_group.lambda_vpc.id]
 
   environment_variables = {
-    PARKING_TABLE = "aparcar-dev-parking-signals"
-    REDIS_HOST    = module.elasticache.redis_endpoint
-    REDIS_PORT    = "6379"
-    DYNAMODB_ENDPOINT   = module.vpc.dynamodb_endpoint_url
+    PARKING_TABLE     = "aparcar-dev-parking-signals"
+    REDIS_HOST        = module.elasticache.redis_endpoint
+    REDIS_PORT        = "6379"
+    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [
@@ -219,10 +219,10 @@ module "radius_matcher" {
   security_group_ids             = [aws_security_group.lambda_vpc.id]
 
   environment_variables = {
-    REDIS_HOST                   = module.elasticache.redis_endpoint
-    REDIS_PORT                   = "6379"
-    DYNAMODB_ENDPOINT            = module.vpc.dynamodb_endpoint_url
-    NOTIFICATION_DISPATCHER_ARN  = module.notification_dispatcher.function_arn
+    REDIS_HOST                  = module.elasticache.redis_endpoint
+    REDIS_PORT                  = "6379"
+    DYNAMODB_ENDPOINT           = module.vpc.dynamodb_endpoint_url
+    NOTIFICATION_DISPATCHER_ARN = module.notification_dispatcher.function_arn
   }
 
   policy_statements = [

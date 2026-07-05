@@ -102,9 +102,6 @@ def handler(event, context):
         expires_at = now + LOOK_TTL_SECONDS
 
         # ── Redis ──
-        import socket
-        ip = socket.gethostbyname("dynamodb.eu-west-1.amazonaws.com")
-        print(f"[DEBUG] DynamoDB resolves to: {ip}")
         r = RawRedis(REDIS_HOST, REDIS_PORT)
         try:
             r.geoadd("aparcar:looking:drivers", lng, lat, user_id)
