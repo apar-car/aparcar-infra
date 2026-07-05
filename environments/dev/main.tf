@@ -266,3 +266,11 @@ resource "aws_lambda_permission" "eventbridge_radius_matcher" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.parking_spot_leaving.arn
 }
+
+resource "aws_lambda_permission" "radius_matcher_invoke_notifier" {
+  statement_id  = "AllowRadiusMatcherInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.notification_dispatcher.function_name
+  principal     = "lambda.amazonaws.com"
+  source_arn    = module.radius_matcher.function_arn
+}
