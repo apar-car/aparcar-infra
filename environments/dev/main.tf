@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "../../modules/vpc"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=d0febd947de35c17cd0c46217da09131c4108403"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -18,7 +18,7 @@ data "archive_file" "leave_signal_handler" {
 
 
 module "leave_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=d7aa351712756906d4b455e2897c8db2242e4d27"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=d0febd947de35c17cd0c46217da09131c4108403"
 
   function_name                  = "leave-signal-handler"
   zip_path                       = data.archive_file.leave_signal_handler.output_path
@@ -48,7 +48,7 @@ module "leave_signal_handler" {
 }
 
 module "parking_signals_table" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=d7aa351712756906d4b455e2897c8db2242e4d27"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=d0febd947de35c17cd0c46217da09131c4108403"
 
   table_name  = "parking-signals"
   environment = "dev"
@@ -135,7 +135,7 @@ data "archive_file" "look_signal_handler" {
 }
 
 module "look_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=d7aa351712756906d4b455e2897c8db2242e4d27"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=d0febd947de35c17cd0c46217da09131c4108403"
 
   function_name                  = "look-signal-handler"
   zip_path                       = data.archive_file.look_signal_handler.output_path
