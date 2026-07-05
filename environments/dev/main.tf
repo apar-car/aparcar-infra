@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=d7aa351712756906d4b455e2897c8db2242e4d27"
+   source = "../../modules/vpc"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
