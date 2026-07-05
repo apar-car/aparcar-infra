@@ -11,7 +11,7 @@ REDIS_HOST        = os.environ["REDIS_HOST"]
 REDIS_PORT        = int(os.environ.get("REDIS_PORT", 6379))
 DYNAMODB_ENDPOINT = os.environ.get("DYNAMODB_ENDPOINT", "")
 NOTIFIER_ARN      = os.environ["NOTIFICATION_DISPATCHER_ARN"]
-MAX_SEARCH_RADIUS = 5000  # metres — query with max, filter per-driver
+MAX_SEARCH_RADIUS = 5000
 
 
 class RawRedis:
@@ -86,7 +86,7 @@ def handler(event, context):
     print(f"[INFO] radius-matcher triggered: {json.dumps(event)}")
 
     try:
-        detail = event.get("detail", {})
+        detail      = event.get("detail", {})
         signal_id   = detail.get("signalId")
         leaving_lat = float(detail.get("lat"))
         leaving_lng = float(detail.get("lng"))
@@ -96,7 +96,7 @@ def handler(event, context):
 
         print(f"[INFO] Spot leaving at {leaving_lat},{leaving_lng} signal={signal_id}")
 
-        # ── Query Redis for looking drivers within max radius ──
+        # ── Redis GEOSEARCH ──
         r = RawRedis(REDIS_HOST, REDIS_PORT)
         try:
             candidates = r.geosearch(
@@ -132,35 +132,36 @@ def handler(event, context):
 
         print(f"[INFO] {len(matched)} drivers matched after radius filter")
 
-        # ── Invoke notification-dispatcher for each match ──
+        # ── Invoke notification-dispatcher synchronously ──
         lambda_client = boto3.client("lambda", region_name="eu-west-1")
 
         for match in matched:
             payload = {
-                "matchedUserId": match["userId"],
+                "matchedUserId":  match["userId"],
                 "distanceMeters": match["distance"],
                 "parkingSignal": {
-                    "signalId":   signal_id,
-                    "lat":        leaving_lat,
-                    "lng":        leaving_lng,
+                    "signalId":     signal_id,
+                    "lat":          leaving_lat,
+                    "lng":          leaving_lng,
                     "timerMinutes": timer_min,
-                    "expiresAt":  expires_at,
-                    "carDetails": car_details,
+                    "expiresAt":    expires_at,
+                    "carDetails":   car_details,
                 }
             }
             print(f"[INFO] Invoking notification-dispatcher for {match['userId']}")
-            lambda_client.invoke(
+            response = lambda_client.invoke(
                 FunctionName=NOTIFIER_ARN,
-                InvocationType="Event",  # async — fire and forget
+                InvocationType="RequestResponse",
                 Payload=json.dumps(payload),
             )
+            print(f"[INFO] Notifier response status: {response['StatusCode']}")
 
         return {
-            "signalId":     signal_id,
+            "signalId":        signal_id,
             "candidatesFound": len(candidates),
-            "matched":      len(matched),
+            "matched":         len(matched),
         }
 
     except Exception as e:
         print(f"[ERROR] radius-matcher: {e}")
-        raise
+        raise              
