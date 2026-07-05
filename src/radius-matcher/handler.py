@@ -154,12 +154,12 @@ def handler(event, context):
                 }
             }
             print(f"[INFO] Invoking notification-dispatcher for {match['userId']}")
-            response = lambda_client.invoke(
+            lambda_client.invoke(
                 FunctionName=NOTIFIER_ARN,
-                InvocationType="RequestResponse",
+                InvocationType="Event",
                 Payload=json.dumps(payload),
             )
-            print(f"[INFO] Notifier response status: {response['StatusCode']}")
+            
 
         return {
             "signalId":        signal_id,
