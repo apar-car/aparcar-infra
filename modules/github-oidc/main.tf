@@ -131,7 +131,10 @@ resource "aws_iam_role_policy" "ci" {
           "sns:GetSubscriptionAttributes",
           "sns:ListSubscriptionsByTopic",
           "cloudwatch:DescribeAlarms",
-          "cloudwatch:ListTagsForResource"
+          "cloudwatch:ListTagsForResource",
+          "wafv2:Get*",
+          "wafv2:List*",
+          "wafv2:Describe*"
         ]
         Resource = "*"
       }
@@ -455,6 +458,42 @@ resource "aws_iam_role_policy" "cd" {
           "cloudwatch:TagResource",
           "cloudwatch:UntagResource"
         ]
+        Resource = "*"
+      },
+      {
+        Sid    = "WAFManage"
+        Effect = "Allow"
+        Action = [
+          "wafv2:CreateWebACL",
+          "wafv2:DeleteWebACL",
+          "wafv2:GetWebACL",
+          "wafv2:UpdateWebACL",
+          "wafv2:ListWebACLs",
+          "wafv2:AssociateWebACL",
+          "wafv2:DisassociateWebACL",
+          "wafv2:GetWebACLForResource",
+          "wafv2:ListResourcesForWebACL",
+          "wafv2:TagResource",
+          "wafv2:UntagResource",
+          "wafv2:ListTagsForResource",
+          "wafv2:PutLoggingConfiguration",
+          "wafv2:GetLoggingConfiguration",
+          "wafv2:DeleteLoggingConfiguration",
+          "wafv2:ListAvailableManagedRuleGroups",
+          "wafv2:DescribeManagedRuleGroup"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid = "WAFLogsManage"
+        Action = [
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:PutResourcePolicy",
+          "logs:DescribeResourcePolicies",
+          "logs:DescribeLogGroups"
+        ]
+        Effect   = "Allow"
         Resource = "*"
       }
     ]
