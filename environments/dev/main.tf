@@ -275,3 +275,12 @@ resource "aws_lambda_permission" "radius_matcher_invoke_notifier" {
   principal     = "lambda.amazonaws.com"
   source_arn    = module.radius_matcher.function_arn
 }
+
+module "waf" {
+  source = "../../modules/waf"
+
+  environment     = "dev"
+  project         = "aparcar"
+  appsync_api_arn = "arn:aws:appsync:eu-west-1:945475931696:apis/ta7iib5itbarbpjuh5extujzlu"
+  rate_limit      = 100
+}
