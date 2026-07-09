@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=d0febd947de35c17cd0c46217da09131c4108403"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -18,7 +18,7 @@ data "archive_file" "leave_signal_handler" {
 
 
 module "leave_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=d0febd947de35c17cd0c46217da09131c4108403"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
 
   function_name                  = "leave-signal-handler"
   zip_path                       = data.archive_file.leave_signal_handler.output_path
@@ -48,7 +48,7 @@ module "leave_signal_handler" {
 }
 
 module "parking_signals_table" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=d0febd947de35c17cd0c46217da09131c4108403"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
 
   table_name  = "parking-signals"
   environment = "dev"
@@ -135,7 +135,7 @@ data "archive_file" "look_signal_handler" {
 }
 
 module "look_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=d0febd947de35c17cd0c46217da09131c4108403"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
 
   function_name                  = "look-signal-handler"
   zip_path                       = data.archive_file.look_signal_handler.output_path
@@ -277,7 +277,7 @@ resource "aws_lambda_permission" "radius_matcher_invoke_notifier" {
 }
 
 module "waf" {
-  source = "../../modules/waf"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/waf?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
 
   environment     = "dev"
   project         = "aparcar"
