@@ -424,7 +424,8 @@ resource "aws_iam_role_policy" "cd" {
           "appsync:CreateApiKey",
           "appsync:DeleteApiKey",
           "appsync:ListApiKeys",
-          "appsync:UpdateApiKey"
+          "appsync:UpdateApiKey",
+          "appsync:SetWebACL"
         ]
         Resource = "*"
       },
