@@ -93,7 +93,7 @@ resource "aws_wafv2_web_acl_association" "appsync" {
 
 resource "aws_cloudwatch_log_group" "waf" {
   name              = "aws-waf-logs-${var.project}-${var.environment}"
-  retention_in_days = 30
+  retention_in_days = 365
 
   tags = {
     Environment = var.environment
