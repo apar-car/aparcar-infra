@@ -248,20 +248,6 @@ sensitive data.
 
 ---
 
-### verify=False on DynamoDB boto3 client (look-signal-handler)
-**Resource:** `src/look-signal-handler/handler.py`
-**Reason:** VPC Lambda cannot reach DynamoDB via Gateway Endpoint despite correct
-prefix list coverage (35.71.75.115 is in 35.71.72.0/22). Interface Endpoint deployed
-as workaround but VPC endpoint certificate is AWS-internal and not verifiable without
-bundling the Amazon Root CA. SSL is still active — traffic is encrypted, just not
-verified. Acceptable for dev pilot inside a private VPC with no public access.
-**Risk:** Man-in-the-middle attack within the VPC — practically impossible given
-private subnet with no internet access and SG restricted to Lambda SG only.
-**Required fix before prod:** Import Amazon Root CA bundle into Lambda deployment
-package and set `verify="/path/to/amazon-root-ca.pem"` instead of `verify=False`.
-CA bundle available at https://www.amazontrust.com/repository/
-**Review:** Before prod launch.
-
 ## Exception Policy
 
 1. Every exception must be documented here before being added to the skip list.
