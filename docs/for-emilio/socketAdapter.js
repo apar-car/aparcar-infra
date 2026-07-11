@@ -1,6 +1,8 @@
 // socketAdapter.js — AparCar AWS AppSync adapter
 // Replaces Socket.io server.js
-// Author: Pietro | Generated: July 2026
+// Author: Pietro | Updated: July 2026 v2.1.0
+// Changes: requestSpot, confirmExchange, cancelExchange signatures updated.
+//          submitRating added. updateLocation removed.
 
 import { Amplify } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/api';
@@ -69,14 +71,29 @@ const REGISTER_LOOKING_DRIVER = `
 
 const REQUEST_SPOT = `
   mutation RequestSpot(
-    $spotId: String!
+    $signalId: String!
     $userId: String!
-    $carDetails: String!
   ) {
     requestSpot(
-      spotId: $spotId
+      signalId: $signalId
       userId: $userId
-      carDetails: $carDetails
+    ) {
+      success
+      exchangeId
+      arrivalDeadline
+      error
+    }
+  }
+`;
+
+const CONFIRM_EXCHANGE = `
+  mutation ConfirmExchange(
+    $exchangeId: String!
+    $userId: String!
+  ) {
+    confirmExchange(
+      exchangeId: $exchangeId
+      userId: $userId
     ) {
       success
       exchangeId
@@ -85,154 +102,165 @@ const REQUEST_SPOT = `
   }
 `;
 
-const CONFIRM_EXCHANGE = `
-  mutation ConfirmExchange($exchangeId: String!, $role: String!) {
-    confirmExchange(exchangeId: $exchangeId, role: $role) {
-      success
-      status
-      error
-    }
-  }
-`;
-
+// reason must be one of:
+// Driver 1: DRIVER1_CHANGED_MIND | DRIVER1_ALREADY_LEFT | DRIVER1_TIMER_EXPIRED
+// Driver 2: DRIVER2_FOUND_OTHER | DRIVER2_TOO_FAR
 const CANCEL_EXCHANGE = `
-  mutation CancelExchange($exchangeId: String!, $role: String!) {
-    cancelExchange(exchangeId: $exchangeId, role: $role) {
+  mutation CancelExchange(
+    $exchangeId: String!
+    $userId: String!
+    $reason: String!
+  ) {
+    cancelExchange(
+      exchangeId: $exchangeId
+      userId: $userId
+      reason: $reason
+    ) {
+      success
+      exchangeId
+      error
+    }
+  }
+`;
+
+const SUBMIT_RATING = `
+  mutation SubmitRating(
+    $exchangeId: String!
+    $userId: String!
+    $thumbsUp: Boolean!
+  ) {
+    submitRating(
+      exchangeId: $exchangeId
+      userId: $userId
+      thumbsUp: $thumbsUp
+    ) {
       success
       error
     }
   }
 `;
 
-const UPDATE_LOCATION = `
-  mutation UpdateLocation(
-    $exchangeId: String!
-    $lat: Float!
-    $lng: Float!
-  ) {
-    updateLocation(exchangeId: $exchangeId, lat: $lat, lng: $lng)
-  }
-`;
-
-// ─── Subscriptions ────────────────────────────────────────────────────────────
+// ─── Subscription ─────────────────────────────────────────────────────────────
 
 const ON_SPOTS_UPDATE = `
   subscription OnSpotsUpdate {
     onSpotsUpdate {
+      success
       signalId
-      user
-      carDetails
-      lat
-      lng
-      timerMinutes
       expiresAt
+      timerMinutes
+      error
     }
   }
 `;
 
-// ─── API Functions ────────────────────────────────────────────────────────────
+// ─── API functions ────────────────────────────────────────────────────────────
 
-/**
- * Driver taps "I'm leaving"
- * @param {string} user - User identifier
- * @param {string} carDetails - Car description
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- * @param {number} timer_minutes - Timer in minutes (1-30)
- * @returns {Promise<{success, signalId, expiresAt, earlyWarningAt, timerMinutes, error}>}
- */
-export async function createParkingSignal({ user, carDetails, lat, lng, timer_minutes }) {
-  const result = await client.graphql({
-    query: CREATE_PARKING_SIGNAL,
-    variables: { user, carDetails, lat, lng, timer_minutes },
+export const aparcar = {
+
+  // Driver 1 signals they are leaving
+  // Returns: { signalId, expiresAt, earlyWarningAt, timerMinutes }
+  async createParkingSignal({ user, carDetails, lat, lng, timer_minutes }) {
+    const res = await client.graphql({
+      query: CREATE_PARKING_SIGNAL,
+      variables: { user, carDetails, lat, lng, timer_minutes },
+    });
+    return res.data.createParkingSignal;
+  },
+
+  // Driver 2 registers as looking for a spot
+  // Returns: { lookId }
+  async registerLookingDriver({ userId, lat, lng, radius_meters = 500 }) {
+    const res = await client.graphql({
+      query: REGISTER_LOOKING_DRIVER,
+      variables: { userId, lat, lng, radius_meters },
+    });
+    return res.data.registerLookingDriver;
+  },
+
+  // Driver 2 claims a specific spot (after receiving push notification)
+  // signalId comes from the push notification payload
+  // Returns: { exchangeId, arrivalDeadline } — 10 minute window to arrive
+  async requestSpot({ signalId, userId }) {
+    const res = await client.graphql({
+      query: REQUEST_SPOT,
+      variables: { signalId, userId },
+    });
+    return res.data.requestSpot;
+  },
+
+  // Driver 2 confirms they have arrived and parked
+  // Returns: { exchangeId }
+  // After this, call submitRating
+  async confirmExchange({ exchangeId, userId }) {
+    const res = await client.graphql({
+      query: CONFIRM_EXCHANGE,
+      variables: { exchangeId, userId },
+    });
+    return res.data.confirmExchange;
+  },
+
+  // Either driver cancels the exchange
+  // Driver 1 reasons: DRIVER1_CHANGED_MIND | DRIVER1_ALREADY_LEFT | DRIVER1_TIMER_EXPIRED
+  // Driver 2 reasons: DRIVER2_FOUND_OTHER | DRIVER2_TOO_FAR
+  async cancelExchange({ exchangeId, userId, reason }) {
+    const res = await client.graphql({
+      query: CANCEL_EXCHANGE,
+      variables: { exchangeId, userId, reason },
+    });
+    return res.data.cancelExchange;
+  },
+
+  // Submit thumbs up/down after a confirmed exchange
+  // thumbsUp: true = thumbs up, false = thumbs down
+  // Call after confirmExchange for both drivers
+  async submitRating({ exchangeId, userId, thumbsUp }) {
+    const res = await client.graphql({
+      query: SUBMIT_RATING,
+      variables: { exchangeId, userId, thumbsUp },
+    });
+    return res.data.submitRating;
+  },
+
+  // Subscribe to real-time spot updates
+  // callback receives { signalId, expiresAt, timerMinutes }
+  subscribeToSpotUpdates(callback) {
+    return client
+      .graphql({ query: ON_SPOTS_UPDATE })
+      .subscribe({ next: ({ data }) => callback(data.onSpotsUpdate) });
+  },
+};
+
+// ─── Maps helper ──────────────────────────────────────────────────────────────
+// Call this when user taps a push notification containing lat/lng
+// Opens native Maps app at the parking spot coordinates
+
+import { Linking, Platform } from 'react-native';
+
+export function openMapsAtSpot(lat, lng, label = 'Plaza disponible') {
+  const encoded = encodeURIComponent(label);
+  const url = Platform.select({
+    ios: `maps://maps.apple.com/?q=${encoded}&ll=${lat},${lng}`,
+    android: `geo:${lat},${lng}?q=${lat},${lng}(${encoded})`,
   });
-  return result.data.createParkingSignal;
+  const fallback = `https://maps.google.com/?q=${lat},${lng}`;
+  Linking.canOpenURL(url)
+    .then(supported => Linking.openURL(supported ? url : fallback))
+    .catch(() => Linking.openURL(fallback));
 }
 
-/**
- * Driver taps "I'm looking"
- * STUB — returns mock success until look-signal-handler is built
- * @param {string} userId
- * @param {number} lat
- * @param {number} lng
- * @param {number} radius_meters
- */
-export async function registerLookingDriver({ userId, lat, lng, radius_meters }) {
-  const result = await client.graphql({
-    query: REGISTER_LOOKING_DRIVER,
-    variables: { userId, lat, lng, radius_meters },
-  });
-  return result.data.registerLookingDriver;
-}
+// ─── Push notification handler ────────────────────────────────────────────────
+// Wire this to your Expo notification listener in App.js
+// Notifications contain: { signalId, lat, lng, carDetails, timerMinutes, distanceMeters }
 
-/**
- * Looking driver requests a spot
- * STUB — returns mock success until requestSpot handler is built
- */
-export async function requestSpot({ spotId, userId, carDetails }) {
-  const result = await client.graphql({
-    query: REQUEST_SPOT,
-    variables: { spotId, userId, carDetails },
-  });
-  return result.data.requestSpot;
-}
+import * as Notifications from 'expo-notifications';
 
-/**
- * Confirm exchange (both parties)
- * STUB — returns mock success
- */
-export async function confirmExchange({ exchangeId, role }) {
-  const result = await client.graphql({
-    query: CONFIRM_EXCHANGE,
-    variables: { exchangeId, role },
+export function setupNotificationHandler(onMatch) {
+  return Notifications.addNotificationResponseReceivedListener(response => {
+    const data = response.notification.request.content.data;
+    // data.lat and data.lng are the parking spot coordinates
+    // Call onMatch(data) to let your UI handle the match
+    // Then call openMapsAtSpot(data.lat, data.lng, data.carDetails) on user tap
+    if (onMatch) onMatch(data);
   });
-  return result.data.confirmExchange;
-}
-
-/**
- * Cancel exchange
- * STUB — returns mock success
- */
-export async function cancelExchange({ exchangeId, role }) {
-  const result = await client.graphql({
-    query: CANCEL_EXCHANGE,
-    variables: { exchangeId, role },
-  });
-  return result.data.cancelExchange;
-}
-
-/**
- * Update location during active exchange
- * STUB — returns mock success
- */
-export async function updateLocation({ exchangeId, lat, lng }) {
-  const result = await client.graphql({
-    query: UPDATE_LOCATION,
-    variables: { exchangeId, lat, lng },
-  });
-  return result.data.updateLocation;
-}
-
-/**
- * Subscribe to real-time parking spot updates
- * @param {function} onData - callback receives spot update
- * @param {function} onError - callback receives error
- * @returns {object} subscription handle — call .unsubscribe() to stop
- */
-export function subscribeToSpotUpdates({ onData, onError }) {
-  const subscription = client.graphql({
-    query: ON_SPOTS_UPDATE,
-  }).subscribe({
-    next: ({ data }) => {
-      if (data?.onSpotsUpdate) {
-        onData(data.onSpotsUpdate);
-      }
-    },
-    error: (error) => {
-      console.error('[AparCar] Subscription error:', error);
-      if (onError) onError(error);
-    },
-  });
-
-  return subscription;
 }
