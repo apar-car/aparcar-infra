@@ -279,7 +279,6 @@ module "request_spot_handler" {
     EXCHANGES_TABLE   = "aparcar-dev-exchanges"
     SIGNALS_TABLE     = "aparcar-dev-parking-signals"
     USERS_TABLE       = "aparcar-dev-users"
-    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [
@@ -317,7 +316,6 @@ module "confirm_exchange_handler" {
     EXCHANGES_TABLE   = "aparcar-dev-exchanges"
     SIGNALS_TABLE     = "aparcar-dev-parking-signals"
     USERS_TABLE       = "aparcar-dev-users"
-    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [
@@ -354,7 +352,6 @@ module "cancel_exchange_handler" {
   environment_variables = {
     EXCHANGES_TABLE   = "aparcar-dev-exchanges"
     SIGNALS_TABLE     = "aparcar-dev-parking-signals"
-    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [
@@ -390,7 +387,6 @@ module "submit_rating_handler" {
   environment_variables = {
     EXCHANGES_TABLE   = "aparcar-dev-exchanges"
     USERS_TABLE       = "aparcar-dev-users"
-    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
   }
 
   policy_statements = [
