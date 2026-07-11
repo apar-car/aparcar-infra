@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -18,7 +18,7 @@ data "archive_file" "leave_signal_handler" {
 
 
 module "leave_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "leave-signal-handler"
   zip_path                       = data.archive_file.leave_signal_handler.output_path
@@ -48,7 +48,7 @@ module "leave_signal_handler" {
 }
 
 module "parking_signals_table" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   table_name  = "parking-signals"
   environment = "dev"
@@ -56,7 +56,7 @@ module "parking_signals_table" {
 }
 
 module "exchanges_table" {
-  source = "../../modules/dynamodb"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   table_name  = "exchanges"
   hash_key    = "exchangeId"
@@ -157,7 +157,7 @@ data "archive_file" "look_signal_handler" {
 }
 
 module "look_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "look-signal-handler"
   zip_path                       = data.archive_file.look_signal_handler.output_path
@@ -228,7 +228,7 @@ data "archive_file" "radius_matcher" {
 }
 
 module "radius_matcher" {
-  source = "../../modules/lambda"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "radius-matcher"
   zip_path                       = data.archive_file.radius_matcher.output_path
@@ -265,7 +265,7 @@ data "archive_file" "request_spot_handler" {
 }
 
 module "request_spot_handler" {
-  source = "../../modules/lambda"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "request-spot-handler"
   zip_path                       = data.archive_file.request_spot_handler.output_path
@@ -302,7 +302,7 @@ data "archive_file" "confirm_exchange_handler" {
 }
 
 module "confirm_exchange_handler" {
-  source = "../../modules/lambda"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "confirm-exchange-handler"
   zip_path                       = data.archive_file.confirm_exchange_handler.output_path
@@ -339,7 +339,7 @@ data "archive_file" "cancel_exchange_handler" {
 }
 
 module "cancel_exchange_handler" {
-  source = "../../modules/lambda"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "cancel-exchange-handler"
   zip_path                       = data.archive_file.cancel_exchange_handler.output_path
@@ -374,7 +374,7 @@ data "archive_file" "submit_rating_handler" {
 }
 
 module "submit_rating_handler" {
-  source = "../../modules/lambda"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   function_name                  = "submit-rating-handler"
   zip_path                       = data.archive_file.submit_rating_handler.output_path
@@ -443,7 +443,7 @@ resource "aws_lambda_permission" "radius_matcher_invoke_notifier" {
 }
 
 module "waf" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/waf?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/waf?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
 
   environment     = "dev"
   project         = "aparcar"
