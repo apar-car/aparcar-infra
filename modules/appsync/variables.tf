@@ -34,3 +34,23 @@ variable "look_signal_handler_arn" {
   description = "ARN of the look-signal-handler Lambda"
   type        = string
 }
+
+variable "request_spot_handler_arn" {
+  description = "ARN of the request-spot-handler Lambda"
+  type        = string
+}
+
+variable "confirm_exchange_handler_arn" {
+  description = "ARN of the confirm-exchange-handler Lambda"
+  type        = string
+}
+
+variable "cancel_exchange_handler_arn" {
+  description = "ARN of the cancel-exchange-handler Lambda"
+  type        = string
+}
+
+variable "submit_rating_handler_arn" {
+  description = "ARN of the submit-rating-handler Lambda"
+  type        = string
+}

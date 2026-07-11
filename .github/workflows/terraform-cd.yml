@@ -42,6 +42,14 @@ jobs:
           -t src/notification-dispatcher/ --break-system-packages
           pip install -r src/radius-matcher/requirements.txt \
           -t src/radius-matcher/ --break-system-packages
+          pip install -r src/request-spot-handler/requirements.txt \
+          -t src/request-spot-handler/ --break-system-packages
+          pip install -r src/confirm-exchange-handler/requirements.txt \
+          -t src/confirm-exchange-handler/ --break-system-packages
+          pip install -r src/cancel-exchange-handler/requirements.txt \
+          -t src/cancel-exchange-handler/ --break-system-packages
+          pip install -r src/submit-rating-handler/requirements.txt \
+          -t src/submit-rating-handler/ --break-system-packages
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@f79bc868ee9ca4687c7db10f05fe6a46cdcda892 # v6
