@@ -2,10 +2,8 @@ import os
 import ssl
 import json
 import socket
-import urllib3
 import boto3
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 REDIS_HOST        = os.environ["REDIS_HOST"]
 REDIS_PORT        = int(os.environ.get("REDIS_PORT", 6379))
@@ -137,7 +135,7 @@ def handler(event, context):
         lambda_client = boto3.client("lambda", 
                                      region_name="eu-west-1",
                                      endpoint_url=LAMBDA_ENDPOINT if LAMBDA_ENDPOINT else None,
-                                     verify=False,
+                                     verify=os.path.join(os.path.dirname(__file__), "AmazonRootCA1.pem"),
                                      )
 
         for match in matched:

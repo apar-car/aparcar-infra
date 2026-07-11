@@ -3,10 +3,8 @@ import uuid
 import time
 import ssl
 import socket
-import urllib3
 import boto3
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 PARKING_TABLE     = os.environ["PARKING_TABLE"]
 REDIS_HOST        = os.environ["REDIS_HOST"]
@@ -122,7 +120,7 @@ def handler(event, context):
             "dynamodb",
             region_name="eu-west-1",
             endpoint_url=DYNAMODB_ENDPOINT if DYNAMODB_ENDPOINT else None,
-            verify=False,
+            verify=os.path.join(os.path.dirname(__file__), "AmazonRootCA1.pem"),
         )
         ddb.Table(PARKING_TABLE).put_item(Item={
             "signalId":     look_id,
