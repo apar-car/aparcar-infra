@@ -40,3 +40,9 @@ variable "global_secondary_indexes" {
   }))
   default = []
 }
+
+variable "hash_key" {
+  description = "DynamoDB table hash key attribute name"
+  type        = string
+  default     = "signalId"
+}
