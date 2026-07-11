@@ -99,11 +99,6 @@ def handler(event, context):
         now        = int(time.time())
         expires_at = now + LOOK_TTL_SECONDS
 
-        CA_BUNDLE = os.path.join(os.path.dirname(__file__), "AmazonRootCA1.pem")
-        print(f"[DEBUG] CA bundle path: {CA_BUNDLE}, exists: {os.path.exists(CA_BUNDLE)}")
-        print(f"[DEBUG] __file__: {__file__}")
-        print(f"[DEBUG] dirname: {os.path.dirname(__file__)}")
-        print(f"[DEBUG] files in dir: {os.listdir(os.path.dirname(__file__) or '.')}")
 
         # ── Redis ──
         r = RawRedis(REDIS_HOST, REDIS_PORT)
@@ -126,7 +121,7 @@ def handler(event, context):
             "dynamodb",
             region_name="eu-west-1",
             endpoint_url=DYNAMODB_ENDPOINT if DYNAMODB_ENDPOINT else None,
-            verify=os.path.join(CA_BUNDLE),
+            verify=os.path.join(os.path.dirname(__file__), "AmazonRootCA1.pem"),
         )
         ddb.Table(PARKING_TABLE).put_item(Item={
             "signalId":     look_id,
