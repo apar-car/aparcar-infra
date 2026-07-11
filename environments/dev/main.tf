@@ -94,12 +94,16 @@ module "eventbridge" {
 module "appsync" {
   source = "../../modules/appsync"
 
-  environment                = "dev"
-  project                    = "aparcar"
-  leave_signal_handler_arn   = module.leave_signal_handler.function_arn
-  parking_signals_table_arn  = module.parking_signals_table.table_arn
-  parking_signals_table_name = module.parking_signals_table.table_name
-  look_signal_handler_arn    = module.look_signal_handler.function_arn
+  environment                  = "dev"
+  project                      = "aparcar"
+  leave_signal_handler_arn     = module.leave_signal_handler.function_arn
+  look_signal_handler_arn      = module.look_signal_handler.function_arn
+  parking_signals_table_arn    = module.parking_signals_table.table_arn
+  parking_signals_table_name   = module.parking_signals_table.table_name
+  request_spot_handler_arn     = module.request_spot_handler.function_arn
+  confirm_exchange_handler_arn = module.confirm_exchange_handler.function_arn
+  cancel_exchange_handler_arn  = module.cancel_exchange_handler.function_arn
+  submit_rating_handler_arn    = module.submit_rating_handler.function_arn
 }
 
 module "cloudwatch_alarms" {
@@ -249,6 +253,154 @@ module "radius_matcher" {
       effect    = "Allow"
       actions   = ["lambda:InvokeFunction"]
       resources = [module.notification_dispatcher.function_arn]
+    }
+  ]
+}
+
+# --- Archive for request-spot-handler ---
+data "archive_file" "request_spot_handler" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/request-spot-handler"
+  output_path = "${path.root}/builds/request-spot-handler.zip"
+}
+
+module "request_spot_handler" {
+  source = "../../modules/lambda"
+
+  function_name                  = "request-spot-handler"
+  zip_path                       = data.archive_file.request_spot_handler.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+
+  environment_variables = {
+    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
+    SIGNALS_TABLE     = "aparcar-dev-parking-signals"
+    USERS_TABLE       = "aparcar-dev-users"
+    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
+  }
+
+  policy_statements = [
+    {
+      effect  = "Allow"
+      actions = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem"]
+      resources = [
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-parking-signals",
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-exchanges",
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-users",
+      ]
+    }
+  ]
+}
+
+# --- Archive for confirm-exchange-handler ---
+data "archive_file" "confirm_exchange_handler" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/confirm-exchange-handler"
+  output_path = "${path.root}/builds/confirm-exchange-handler.zip"
+}
+
+module "confirm_exchange_handler" {
+  source = "../../modules/lambda"
+
+  function_name                  = "confirm-exchange-handler"
+  zip_path                       = data.archive_file.confirm_exchange_handler.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+
+  environment_variables = {
+    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
+    SIGNALS_TABLE     = "aparcar-dev-parking-signals"
+    USERS_TABLE       = "aparcar-dev-users"
+    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
+  }
+
+  policy_statements = [
+    {
+      effect  = "Allow"
+      actions = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      resources = [
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-parking-signals",
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-exchanges",
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-users",
+      ]
+    }
+  ]
+}
+
+# --- Archive for cancel-exchange-handler
+data "archive_file" "cancel_exchange_handler" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/cancel-exchange-handler"
+  output_path = "${path.root}/builds/cancel-exchange-handler.zip"
+}
+
+module "cancel_exchange_handler" {
+  source = "../../modules/lambda"
+
+  function_name                  = "cancel-exchange-handler"
+  zip_path                       = data.archive_file.cancel_exchange_handler.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+
+  environment_variables = {
+    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
+    SIGNALS_TABLE     = "aparcar-dev-parking-signals"
+    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
+  }
+
+  policy_statements = [
+    {
+      effect  = "Allow"
+      actions = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      resources = [
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-parking-signals",
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-exchanges",
+      ]
+    }
+  ]
+}
+
+# --- Archive for submit-rating-handler
+data "archive_file" "submit_rating_handler" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../src/submit-rating-handler"
+  output_path = "${path.root}/builds/submit-rating-handler.zip"
+}
+
+module "submit_rating_handler" {
+  source = "../../modules/lambda"
+
+  function_name                  = "submit-rating-handler"
+  zip_path                       = data.archive_file.submit_rating_handler.output_path
+  environment                    = "dev"
+  project                        = "aparcar"
+  timeout                        = 30
+  memory_size                    = 128
+  reserved_concurrent_executions = -1
+
+  environment_variables = {
+    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
+    USERS_TABLE       = "aparcar-dev-users"
+    DYNAMODB_ENDPOINT = module.vpc.dynamodb_endpoint_url
+  }
+
+  policy_statements = [
+    {
+      effect  = "Allow"
+      actions = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      resources = [
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-exchanges",
+        "arn:aws:dynamodb:eu-west-1:945475931696:table/aparcar-dev-users",
+      ]
     }
   ]
 }

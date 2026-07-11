@@ -1,5 +1,5 @@
 type ParkingSignalResponse {
-  success: Boolean
+  success: Boolean!
   signalId: String
   expiresAt: Int
   earlyWarningAt: Int
@@ -13,24 +13,26 @@ type LookResponse {
   error: String
 }
 
-type ParkerInput {
-  name: String!
-  carDetails: String!
+type ExchangeResponse {
+  success: Boolean!
+  exchangeId: String
+  arrivalDeadline: Int
+  error: String
 }
 
-type ExchangeResponse {
+type ConfirmResponse {
   success: Boolean!
   exchangeId: String
   error: String
 }
 
-type ExchangeStatus {
+type CancelResponse {
   success: Boolean!
-  status: String
+  exchangeId: String
   error: String
 }
 
-type CancelResponse {
+type RatingResponse {
   success: Boolean!
   error: String
 }
@@ -62,36 +64,26 @@ type Mutation {
   ): LookResponse!
 
   requestSpot(
-    spotId: String!
+    signalId: String!
     userId: String!
-    carDetails: String!
   ): ExchangeResponse!
 
   confirmExchange(
     exchangeId: String!
-    role: String!
-  ): ExchangeStatus!
+    userId: String!
+  ): ConfirmResponse!
 
   cancelExchange(
     exchangeId: String!
-    role: String!
+    userId: String!
+    reason: String!
   ): CancelResponse!
 
-  updateLocation(
+  submitRating(
     exchangeId: String!
-    lat: Float!
-    lng: Float!
-  ): Boolean!
-}
-
-type SpotUpdate {
-  signalId: String
-  user: String
-  carDetails: String
-  lat: Float
-  lng: Float
-  timerMinutes: Int
-  expiresAt: Int
+    userId: String!
+    thumbsUp: Boolean!
+  ): RatingResponse!
 }
 
 type Subscription {

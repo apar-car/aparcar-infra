@@ -207,76 +207,88 @@ resource "aws_appsync_resolver" "register_looking_driver" {
   response_template = "$util.toJson($ctx.result)"
 }
 
-# Stub resolver — requestSpot
+# requestSpot resolver → request-spot-handler Lambda
 resource "aws_appsync_resolver" "request_spot" {
   api_id      = aws_appsync_graphql_api.main.id
   type        = "Mutation"
   field       = "requestSpot"
-  data_source = aws_appsync_datasource.none.name
+  data_source = aws_appsync_datasource.request_spot_handler.name
 
-  request_template = jsonencode({
-    version = "2018-05-29"
-    payload = {}
-  })
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "Invoke",
+      "payload": {
+        "field": "requestSpot",
+        "arguments": $util.toJson($ctx.args)
+      }
+    }
+  EOT
 
-  response_template = jsonencode({
-    success    = true
-    exchangeId = "stub-exchange-id"
-  })
-
+  response_template = "$util.toJson($ctx.result)"
 }
 
-# Stub resolver — confirmExchange
+# confirmExchange resolver → confirm-exchange-handler Lambda
 resource "aws_appsync_resolver" "confirm_exchange" {
   api_id      = aws_appsync_graphql_api.main.id
   type        = "Mutation"
   field       = "confirmExchange"
-  data_source = aws_appsync_datasource.none.name
+  data_source = aws_appsync_datasource.confirm_exchange_handler.name
 
-  request_template = jsonencode({
-    version = "2018-05-29"
-    payload = {}
-  })
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "Invoke",
+      "payload": {
+        "field": "confirmExchange",
+        "arguments": $util.toJson($ctx.args)
+      }
+    }
+  EOT
 
-  response_template = jsonencode({
-    success = true
-    status  = "CONFIRMED"
-  })
-
+  response_template = "$util.toJson($ctx.result)"
 }
 
-# Stub resolver — cancelExchange
+# cancelExchange resolver → cancel-exchange-handler Lambda
 resource "aws_appsync_resolver" "cancel_exchange" {
   api_id      = aws_appsync_graphql_api.main.id
   type        = "Mutation"
   field       = "cancelExchange"
-  data_source = aws_appsync_datasource.none.name
+  data_source = aws_appsync_datasource.cancel_exchange_handler.name
 
-  request_template = jsonencode({
-    version = "2018-05-29"
-    payload = {}
-  })
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "Invoke",
+      "payload": {
+        "field": "cancelExchange",
+        "arguments": $util.toJson($ctx.args)
+      }
+    }
+  EOT
 
-  response_template = jsonencode({
-    success = true
-  })
-
+  response_template = "$util.toJson($ctx.result)"
 }
 
-# Stub resolver — updateLocation
-resource "aws_appsync_resolver" "update_location" {
+# submitRating resolver → submit-rating-handler Lambda
+resource "aws_appsync_resolver" "submit_rating" {
   api_id      = aws_appsync_graphql_api.main.id
   type        = "Mutation"
-  field       = "updateLocation"
-  data_source = aws_appsync_datasource.none.name
+  field       = "submitRating"
+  data_source = aws_appsync_datasource.submit_rating_handler.name
 
-  request_template = jsonencode({
-    version = "2018-05-29"
-    payload = {}
-  })
+  request_template = <<-EOT
+    {
+      "version": "2018-05-29",
+      "operation": "Invoke",
+      "payload": {
+        "field": "submitRating",
+        "arguments": $util.toJson($ctx.args)
+      }
+    }
+  EOT
 
-  response_template = "true"
-
+  response_template = "$util.toJson($ctx.result)"
 }
 
 # getSignal query resolver → DynamoDB
@@ -308,5 +320,49 @@ resource "aws_appsync_datasource" "look_signal_handler" {
 
   lambda_config {
     function_arn = var.look_signal_handler_arn
+  }
+}
+
+resource "aws_appsync_datasource" "request_spot_handler" {
+  api_id           = aws_appsync_graphql_api.main.id
+  name             = "RequestSpotHandler"
+  type             = "AWS_LAMBDA"
+  service_role_arn = aws_iam_role.appsync_lambda.arn
+
+  lambda_config {
+    function_arn = var.request_spot_handler_arn
+  }
+}
+
+resource "aws_appsync_datasource" "confirm_exchange_handler" {
+  api_id           = aws_appsync_graphql_api.main.id
+  name             = "ConfirmExchangeHandler"
+  type             = "AWS_LAMBDA"
+  service_role_arn = aws_iam_role.appsync_lambda.arn
+
+  lambda_config {
+    function_arn = var.confirm_exchange_handler_arn
+  }
+}
+
+resource "aws_appsync_datasource" "cancel_exchange_handler" {
+  api_id           = aws_appsync_graphql_api.main.id
+  name             = "CancelExchangeHandler"
+  type             = "AWS_LAMBDA"
+  service_role_arn = aws_iam_role.appsync_lambda.arn
+
+  lambda_config {
+    function_arn = var.cancel_exchange_handler_arn
+  }
+}
+
+resource "aws_appsync_datasource" "submit_rating_handler" {
+  api_id           = aws_appsync_graphql_api.main.id
+  name             = "SubmitRatingHandler"
+  type             = "AWS_LAMBDA"
+  service_role_arn = aws_iam_role.appsync_lambda.arn
+
+  lambda_config {
+    function_arn = var.submit_rating_handler_arn
   }
 }
