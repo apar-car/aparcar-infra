@@ -1,10 +1,10 @@
 resource "aws_dynamodb_table" "main" {
   name         = "${var.project}-${var.environment}-${var.table_name}"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "signalId"
+  hash_key     = var.hash_key
 
   attribute {
-    name = "signalId"
+    name = var.hash_key
     type = "S"
   }
 

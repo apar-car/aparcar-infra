@@ -55,6 +55,24 @@ module "parking_signals_table" {
   project     = "aparcar"
 }
 
+module "exchanges_table" {
+  source = "../../modules/dynamodb"
+
+  table_name  = "exchanges"
+  hash_key    = "exchangeId"
+  environment = "dev"
+  project     = "aparcar"
+}
+
+module "users_table" {
+  source = "../../modules/dynamodb"
+
+  table_name  = "users"
+  hash_key    = "userId"
+  environment = "dev"
+  project     = "aparcar"
+}
+
 module "github_oidc" {
   source       = "../../modules/github-oidc"
   environment  = "dev"
