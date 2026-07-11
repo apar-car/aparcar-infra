@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/vpc?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
 
   environment          = "dev"
   vpc_cidr             = "10.16.0.0/16"
@@ -18,7 +18,7 @@ data "archive_file" "leave_signal_handler" {
 
 
 module "leave_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
 
   function_name                  = "leave-signal-handler"
   zip_path                       = data.archive_file.leave_signal_handler.output_path
@@ -48,7 +48,7 @@ module "leave_signal_handler" {
 }
 
 module "parking_signals_table" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/dynamodb?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
 
   table_name  = "parking-signals"
   environment = "dev"
@@ -135,7 +135,7 @@ data "archive_file" "look_signal_handler" {
 }
 
 module "look_signal_handler" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/lambda?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
 
   function_name                  = "look-signal-handler"
   zip_path                       = data.archive_file.look_signal_handler.output_path
@@ -277,7 +277,7 @@ resource "aws_lambda_permission" "radius_matcher_invoke_notifier" {
 }
 
 module "waf" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/waf?ref=eb20dc608b966d0c73ca6d866fc28ebd01696a9e"
+  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/waf?ref=6ecc8e74b033e427daa5edc9ab734bfb69f0f783"
 
   environment     = "dev"
   project         = "aparcar"
