@@ -34,7 +34,7 @@ resource "aws_iam_role" "ci" {
 
 resource "aws_iam_role" "cd" {
   name        = "GitHubActions-TerraformCD"
-  description = "GitHub Actions OIDC role for Terraform CD apply"
+  description = "GitHub Actions OIDC role for Terraform CD apply - main branch only"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
