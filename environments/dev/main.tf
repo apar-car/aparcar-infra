@@ -276,9 +276,9 @@ module "request_spot_handler" {
   reserved_concurrent_executions = -1
 
   environment_variables = {
-    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
-    SIGNALS_TABLE     = "aparcar-dev-parking-signals"
-    USERS_TABLE       = "aparcar-dev-users"
+    EXCHANGES_TABLE = "aparcar-dev-exchanges"
+    SIGNALS_TABLE   = "aparcar-dev-parking-signals"
+    USERS_TABLE     = "aparcar-dev-users"
   }
 
   policy_statements = [
@@ -313,9 +313,9 @@ module "confirm_exchange_handler" {
   reserved_concurrent_executions = -1
 
   environment_variables = {
-    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
-    SIGNALS_TABLE     = "aparcar-dev-parking-signals"
-    USERS_TABLE       = "aparcar-dev-users"
+    EXCHANGES_TABLE = "aparcar-dev-exchanges"
+    SIGNALS_TABLE   = "aparcar-dev-parking-signals"
+    USERS_TABLE     = "aparcar-dev-users"
   }
 
   policy_statements = [
@@ -350,8 +350,8 @@ module "cancel_exchange_handler" {
   reserved_concurrent_executions = -1
 
   environment_variables = {
-    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
-    SIGNALS_TABLE     = "aparcar-dev-parking-signals"
+    EXCHANGES_TABLE = "aparcar-dev-exchanges"
+    SIGNALS_TABLE   = "aparcar-dev-parking-signals"
   }
 
   policy_statements = [
@@ -385,8 +385,8 @@ module "submit_rating_handler" {
   reserved_concurrent_executions = -1
 
   environment_variables = {
-    EXCHANGES_TABLE   = "aparcar-dev-exchanges"
-    USERS_TABLE       = "aparcar-dev-users"
+    EXCHANGES_TABLE = "aparcar-dev-exchanges"
+    USERS_TABLE     = "aparcar-dev-users"
   }
 
   policy_statements = [
