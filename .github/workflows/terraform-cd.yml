@@ -23,7 +23,7 @@ jobs:
   deploy-dev:
     name: Deploy to Dev
     runs-on: ubuntu-latest
-    environment: dev
+    environment: production
     outputs:
       deploy_outcome: ${{ steps.apply.outcome }}
 
@@ -108,7 +108,7 @@ jobs:
     name: Smoke Test Dev
     runs-on: ubuntu-latest
     needs: deploy-dev
-    environment: dev
+    environment: production
 
     steps:
       - name: Configure AWS credentials
@@ -157,7 +157,7 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: smoke-test-dev
-    environment: staging
+    environment: production
 
     steps:
       - name: Checkout
@@ -196,7 +196,7 @@ jobs:
     name: Deploy to Prod
     runs-on: ubuntu-latest
     needs: deploy-staging
-    environment: prod
+    environment: production
 
     steps:
       - name: Checkout
@@ -248,3 +248,4 @@ jobs:
 # Thu Jul  9 04:58:28 PM CEST 2026
 # Sun Jul 12 09:34:02 PM CEST 2026
 # restore
+# Sun Jul 12 09:52:06 PM CEST 2026

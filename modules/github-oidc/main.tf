@@ -34,8 +34,7 @@ resource "aws_iam_role" "ci" {
 
 resource "aws_iam_role" "cd" {
   name        = "GitHubActions-TerraformCD"
-  description = "GitHub Actions OIDC role for Terraform CD apply - main branch only"
-
+  description = "GitHub Actions OIDC role for Terraform CD apply - production environment only"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -47,20 +46,19 @@ resource "aws_iam_role" "cd" {
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-        }
-        StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:*"
+          "token.actions.githubusercontent.com:sub" = "repo:apar-car/aparcar-infra:environment:production"
         }
       }
     }]
   })
-
   tags = {
     Environment = var.environment
     Project     = var.project
     ManagedBy   = "terraform"
   }
 }
+
+
 
 resource "aws_iam_role_policy" "ci" {
   name = "TerraformPlanOnly"
