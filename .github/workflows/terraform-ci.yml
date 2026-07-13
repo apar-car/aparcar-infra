@@ -9,6 +9,7 @@ on:
       - '**.hcl'
       - '.github/workflows/terraform-ci.yml'
       - '**.graphql'
+      - 'src/**'
 
 permissions:
   id-token: write
@@ -43,6 +44,15 @@ jobs:
       - name: Configure Git for GitHub
         run: git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
+      - name: Audit Lambda dependencies
+        run: |
+          pip install pip-audit --break-system-packages
+          for req in src/*/requirements.txt; do
+            if [ -s "$req" ]; then
+              echo "Auditing $req"
+              pip-audit -r "$req" || true
+            fi
+          done
 
       - name: Terraform Format Check
         id: fmt
