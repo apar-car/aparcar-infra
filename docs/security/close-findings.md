@@ -97,34 +97,75 @@ Re-tested post-fix — `admin'--` now returns `Invalid userId format`.
 
 ---
 
-### GraphQL introspection enabled — RESOLVED
+### Attack 4 — GraphQL introspection enabled — RESOLVED
 **Resource:** AppSync API `ta7iib5itbarbpjuh5extujzlu`
 **Finding:** Introspection queries returned full schema to authenticated API
 key holders. An attacker with a valid API key could enumerate all mutations,
 types, and field names via `__schema` and `__type` queries.
 **Previous mitigation attempted:** WAF body inspection rule added but ineffective
-— AppSync processes request body after WAF evaluation layer using wrong syntax
-(`fields_to_match`, `text_transformations` instead of `field_to_match`,
-`text_transformation`).
-**Fix applied:** WAF rule `BlockGraphQLIntrospection` at priority 3 added with
-correct Terraform syntax. Rule blocks requests containing `__schema` or `__type`
+due to incorrect Terraform syntax (`fields_to_match`, `text_transformations`
+instead of `field_to_match`, `text_transformation`) and module pinning to
+pre-fix hash.
+**Fix applied:** WAF rule `BlockGraphQLIntrospection` at priority 3 deployed
+with correct syntax. Rule blocks requests containing `__schema` or `__type`
 in the request body using `LOWERCASE` text transformation and `CONTAINS`
-positional constraint with `oversize_handling = "MATCH"`.
+positional constraint with `oversize_handling = "MATCH"`. WAF module unpinned
+to local path to ensure fix deployed correctly.
 **Verified:** Re-tested post-fix:
 - `{ __schema { types { name } } }` → `403 WAFForbiddenException` ✅
 - `{ __type(name: "Mutation") { fields { name } } }` → `403 WAFForbiddenException` ✅
 - Normal mutations unaffected ✅
 **Resolved:** July 2026
 
+---
+
 ### Attack 5 — Information disclosure
 **Finding:** API error responses could expose internal implementation details,
 stack traces, or sensitive data.
 **Vectors tested:**
-- Non-existent mutation → GraphQL validation error (no internals exposed)
-- Invalid exchangeId → `Exchange not found` (clean, no DynamoDB details)
-- Null injection → GraphQL type validation error (no stack trace)
 
-**Result:** PASS — No stack traces, AWS ARNs, table names, or internal paths
-exposed. Minor: GraphQL validation errors reveal field existence but introspection
-block mitigates schema enumeration risk.
+| Test | Response | Verdict |
+|---|---|---|
+| Non-existent mutation | GraphQL validation error — field undefined | ✅ No internals exposed |
+| Invalid exchangeId | `Exchange not found` | ✅ Clean error |
+| Null injection | GraphQL type validation error | ✅ No stack trace |
+
+**Result:** PASS — No stack traces, AWS ARNs, DynamoDB table names, or internal
+paths exposed in any error response. Minor: GraphQL validation errors confirm
+field existence but introspection block mitigates schema enumeration risk.
+**Tested:** July 2026
+
+---
+
+## Phase 3 — CI/CD Security Review
+
+### Secrets audit — PASS
+**Finding:** Workflow files could contain hardcoded secrets or API keys.
+**Result:** No hardcoded secrets found. All sensitive values use
+`${{ secrets.* }}` references. OIDC used for AWS authentication — no
+long-lived credentials in workflows.
+**Tested:** July 2026
+
+---
+
+### Lambda dependency versions inconsistent — RESOLVED
+**Finding:** boto3 version inconsistent across Lambda handlers:
+- `leave-signal-handler`: `boto3>=1.43.40`
+- `look-signal-handler`: `boto3>=1.34.0`
+- All other handlers: empty requirements.txt (relying on Lambda runtime boto3)
+**Risk:** Handlers with no pinned boto3 version inherit whatever AWS ships in
+the Python 3.12 runtime — may lag behind security patches.
+**Fix applied:** Standardized all eight handlers to `boto3>=1.34.0`.
+Added `pip-audit` step to CI pipeline to scan Lambda dependencies for known
+CVEs on every PR. Added `src/**` to CI trigger paths.
+**Resolved:** July 2026
+
+---
+
+### Hardcoded secrets in Lambda source — PASS
+**Finding:** Lambda Python source files could contain hardcoded AWS credentials
+or API keys.
+**Result:** grep scan of all `src/` Python files found only two matches —
+both inside installed `botocore/credentials.py` library source (comments and
+constants), not AparCar application code. No hardcoded secrets found.
 **Tested:** July 2026
