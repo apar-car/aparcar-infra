@@ -5,6 +5,8 @@ finding, the fix applied, and the date resolved.
 
 ---
 
+## Phase 1 — Infrastructure Review
+
 ### CI role had write access to Terraform state bucket
 **Resource:** `arn:aws:s3:::aparcar-terraform-state-022079552075`
 **Finding:** GitHubActions-TerraformCI role had s3:PutObject and s3:DeleteObject
@@ -39,4 +41,56 @@ https://www.amazontrust.com/repository/ and bundled into both Lambda deployment
 packages. boto3 now uses verify="/var/task/AmazonRootCA1.pem" for DynamoDB
 Interface Endpoint (look-signal-handler) and Lambda Interface Endpoint
 (radius-matcher).
+**Resolved:** July 2026
+
+---
+
+## Phase 2 — AppSync Application Testing
+
+### Attack 1 — Unauthenticated access
+**Finding:** AppSync API accessible without authentication.
+**Result:** PASS — AppSync returns UnauthorizedException for all unauthenticated
+requests. WAF + AppSync API key auth working correctly.
+**Tested:** July 2026
+
+---
+
+### Attack 2 — Authorization bypass
+**Finding:** Business logic authorization could be bypassed by manipulating
+exchangeId or userId parameters.
+**Vectors tested:**
+
+| Attack | Result |
+|---|---|
+| Unauthorized user confirms exchange | Blocked — `Not authorized to confirm this exchange` |
+| Driver2 uses driver1 cancel reason | Blocked — `Invalid reason for driver2` |
+| Driver1 confirms own exchange | Blocked — `Not authorized to confirm this exchange` |
+| Rate unconfirmed exchange | Blocked — `Can only rate completed exchanges` |
+| Driver1 requests own signal | Blocked — `Spot no longer available` |
+
+**Result:** PASS — All five attack vectors blocked. Business logic authorization
+enforced correctly at Lambda level. No bypass found.
+**Tested:** July 2026
+
+---
+
+### Attack 3 — Input validation and injection
+**Finding:** Input fields could accept malicious payloads including SQLi and XSS.
+**Vectors tested:**
+
+| Attack | Result | Verdict |
+|---|---|---|
+| SQLi in userId (`admin'--`) | Initially accepted — fixed | ✅ Closed |
+| XSS in carDetails (`<script>alert(1)</script>`) | 403 WAFForbiddenException | ✅ WAF blocked |
+| Extreme coordinates (lat: 999.99) | `Invalid coordinates` | ✅ |
+| Negative radius (-500) | `radius_meters must be between 50 and 5000` | ✅ |
+| Oversized radius (999999) | `radius_meters must be between 50 and 5000` | ✅ |
+| Zero timer (0 minutes) | `Timer debe estar entre 1 y 30 minutos` | ✅ |
+| Empty userId | `Missing required fields` | ✅ |
+
+**SQLi finding fix:** Regex validation added to all handlers:
+`re.match(r'^[a-zA-Z0-9_-]{1,64}$', user_id)`
+Returns `Invalid userId format` for non-conforming inputs.
+Re-tested post-fix — `admin'--` now returns `Invalid userId format`.
+**Result:** PASS — All vectors blocked after fix applied.
 **Resolved:** July 2026
