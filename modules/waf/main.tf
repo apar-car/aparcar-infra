@@ -61,7 +61,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     statement {
       rate_based_statement {
-        limit              = var.rate_limit
+        limit              = 50
         aggregate_key_type = "IP"
       }
     }
@@ -86,12 +86,12 @@ resource "aws_wafv2_web_acl" "main" {
         statement {
           byte_match_statement {
             search_string = "__schema"
-            fields_to_match {
+            field_to_match {
               body {
                 oversize_handling = "MATCH"
               }
             }
-            text_transformations {
+            text_transformation {
               priority = 0
               type     = "LOWERCASE"
             }
@@ -101,12 +101,12 @@ resource "aws_wafv2_web_acl" "main" {
         statement {
           byte_match_statement {
             search_string = "__type"
-            fields_to_match {
+            field_to_match {
               body {
                 oversize_handling = "MATCH"
               }
             }
-            text_transformations {
+            text_transformation {
               priority = 0
               type     = "LOWERCASE"
             }
