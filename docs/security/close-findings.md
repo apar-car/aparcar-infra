@@ -48,7 +48,7 @@ Interface Endpoint (look-signal-handler) and Lambda Interface Endpoint
 ## Phase 2 — AppSync Application Testing
 
 ### Attack 1 — Unauthenticated access
-**Finding:** AppSync API accessible without authentication.
+**Finding:** AppSync API potentially accessible without authentication.
 **Result:** PASS — AppSync returns UnauthorizedException for all unauthenticated
 requests. WAF + AppSync API key auth working correctly.
 **Tested:** July 2026
@@ -93,4 +93,25 @@ enforced correctly at Lambda level. No bypass found.
 Returns `Invalid userId format` for non-conforming inputs.
 Re-tested post-fix — `admin'--` now returns `Invalid userId format`.
 **Result:** PASS — All vectors blocked after fix applied.
+**Resolved:** July 2026
+
+---
+
+### GraphQL introspection enabled — RESOLVED
+**Resource:** AppSync API `ta7iib5itbarbpjuh5extujzlu`
+**Finding:** Introspection queries returned full schema to authenticated API
+key holders. An attacker with a valid API key could enumerate all mutations,
+types, and field names via `__schema` and `__type` queries.
+**Previous mitigation attempted:** WAF body inspection rule added but ineffective
+— AppSync processes request body after WAF evaluation layer using wrong syntax
+(`fields_to_match`, `text_transformations` instead of `field_to_match`,
+`text_transformation`).
+**Fix applied:** WAF rule `BlockGraphQLIntrospection` at priority 3 added with
+correct Terraform syntax. Rule blocks requests containing `__schema` or `__type`
+in the request body using `LOWERCASE` text transformation and `CONTAINS`
+positional constraint with `oversize_handling = "MATCH"`.
+**Verified:** Re-tested post-fix:
+- `{ __schema { types { name } } }` → `403 WAFForbiddenException` ✅
+- `{ __type(name: "Mutation") { fields { name } } }` → `403 WAFForbiddenException` ✅
+- Normal mutations unaffected ✅
 **Resolved:** July 2026
