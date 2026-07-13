@@ -87,11 +87,13 @@ resource "aws_wafv2_web_acl" "main" {
           byte_match_statement {
             search_string = "__schema"
             fields_to_match {
-              body {}
+              body {
+                oversize_handling = "MATCH"
+              }
             }
             text_transformations {
               priority = 0
-              type     = "NONE"
+              type     = "LOWERCASE"
             }
             positional_constraint = "CONTAINS"
           }
@@ -100,11 +102,13 @@ resource "aws_wafv2_web_acl" "main" {
           byte_match_statement {
             search_string = "__type"
             fields_to_match {
-              body {}
+              body {
+                oversize_handling = "MATCH"
+              }
             }
             text_transformations {
               priority = 0
-              type     = "NONE"
+              type     = "LOWERCASE"
             }
             positional_constraint = "CONTAINS"
           }
