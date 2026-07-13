@@ -248,6 +248,23 @@ sensitive data.
 
 ---
 
+## Unresolved Findings
+
+### GraphQL Introspection enabled
+**Resource:** AppSync API
+**Finding:** Introspection queries return full schema to authenticated API key holders.
+**WAF mitigation attempted:** Body inspection rule added (BlockGraphQLIntrospection)
+but ineffective — AppSync processes request body after WAF evaluation layer.
+Body inspection via WAF does not intercept AppSync GraphQL parsing.
+**Risk:** Low for pilot — API key not public, schema contains no sensitive data,
+unauthenticated introspection blocked by AppSync auth layer.
+**Prod fix:** Migrate to Cognito JWT auth. Implement AppSync field-level resolver
+returning error for __schema queries. Consider AWS AppSync native introspection
+disable feature if available at prod launch date.
+**Review:** Before prod launch.
+
+---
+
 ## Exception Policy
 
 1. Every exception must be documented here before being added to the skip list.
