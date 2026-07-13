@@ -250,19 +250,21 @@ sensitive data.
 
 ## Unresolved Findings
 
-### GraphQL Introspection enabled
-**Resource:** AppSync API
-**Finding:** Introspection queries return full schema to authenticated API key holders.
-**WAF mitigation attempted:** Body inspection rule added (BlockGraphQLIntrospection)
-but ineffective — AppSync processes request body after WAF evaluation layer.
-Body inspection via WAF does not intercept AppSync GraphQL parsing.
-**Risk:** Low for pilot — API key not public, schema contains no sensitive data,
-unauthenticated introspection blocked by AppSync auth layer.
-**Prod fix:** Migrate to Cognito JWT auth. Implement AppSync field-level resolver
-returning error for __schema queries. Consider AWS AppSync native introspection
-disable feature if available at prod launch date.
+### WAF rate limit evaluation delay
+**Resource:** WAF rule `RateLimitPerIP` on `aparcar-dev-web-acl`
+**Finding:** WAF rate-based rules evaluate every 30 seconds — burst traffic
+can exceed the threshold before blocking kicks in. Tested: 60 sequential
+requests all passed; parallel burst of 115 requests all passed.
+**Root cause:** AWS WAF rate-based rules have a documented 30-second evaluation
+window. Sequential requests (~500ms each) spread across the window and never
+trigger the counter. Parallel bursts hit all at once but WAF needs one full
+evaluation cycle before blocking starts.
+**Risk:** Low for pilot — 50 users, API key not public. Sustained attack
+(>50 req over 5 minutes) will be blocked after first 30-second window.
+**Prod fix:** Add AppSync built-in throttling as primary control. Lower WAF
+threshold to 30 req/5min as secondary. Consider AWS Shield Advanced for
+sustained DDoS protection.
 **Review:** Before prod launch.
-
 ---
 
 ## Exception Policy

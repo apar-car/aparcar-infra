@@ -115,3 +115,16 @@ positional constraint with `oversize_handling = "MATCH"`.
 - `{ __type(name: "Mutation") { fields { name } } }` → `403 WAFForbiddenException` ✅
 - Normal mutations unaffected ✅
 **Resolved:** July 2026
+
+### Attack 5 — Information disclosure
+**Finding:** API error responses could expose internal implementation details,
+stack traces, or sensitive data.
+**Vectors tested:**
+- Non-existent mutation → GraphQL validation error (no internals exposed)
+- Invalid exchangeId → `Exchange not found` (clean, no DynamoDB details)
+- Null injection → GraphQL type validation error (no stack trace)
+
+**Result:** PASS — No stack traces, AWS ARNs, table names, or internal paths
+exposed. Minor: GraphQL validation errors reveal field existence but introspection
+block mitigates schema enumeration risk.
+**Tested:** July 2026
