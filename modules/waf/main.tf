@@ -53,7 +53,7 @@ resource "aws_wafv2_web_acl" "main" {
 
   rule {
     name     = "RateLimitPerIP"
-    priority = 3
+    priority = 4
 
     action {
       block {}
@@ -69,6 +69,52 @@ resource "aws_wafv2_web_acl" "main" {
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "${var.project}-${var.environment}-rate-limit"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "BlockGraphQLIntrospection"
+    priority = 3
+
+    action {
+      block {}
+    }
+
+    statement {
+      or_statement {
+        statement {
+          byte_match_statement {
+            search_string = "__schema"
+            fields_to_match {
+              body {}
+            }
+            text_transformations {
+              priority = 0
+              type     = "NONE"
+            }
+            positional_constraint = "CONTAINS"
+          }
+        }
+        statement {
+          byte_match_statement {
+            search_string = "__type"
+            fields_to_match {
+              body {}
+            }
+            text_transformations {
+              priority = 0
+              type     = "NONE"
+            }
+            positional_constraint = "CONTAINS"
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "aparcar-dev-block-introspection"
       sampled_requests_enabled   = true
     }
   }
