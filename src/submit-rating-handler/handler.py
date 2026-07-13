@@ -1,5 +1,6 @@
 import os
 import boto3
+import re
 
 EXCHANGES_TABLE  = os.environ["EXCHANGES_TABLE"] 
 USERS_TABLE      = os.environ["USERS_TABLE"]
@@ -29,6 +30,10 @@ def handler(event, context):
         exchange_id = args.get("exchangeId")
         rater_id    = args.get("userId")
         thumbs_up   = args.get("thumbsUp")  # boolean
+
+        # -- userId format validation
+        if not re.match(r'^[a-zA-Z0-9_-]{1,64}$', rater_id):
+            return {"success": False, "lookId": None, "error": "Invalid userId format"}
 
         if not all([exchange_id, rater_id, thumbs_up is not None]):
             return {"success": False, "error": "Missing required fields"}

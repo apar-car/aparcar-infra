@@ -4,6 +4,7 @@ import time
 import ssl
 import socket
 import boto3
+import re
 
 
 PARKING_TABLE     = os.environ["PARKING_TABLE"]
@@ -88,6 +89,10 @@ def handler(event, context):
 
         if not all([user_id, lat is not None, lng is not None]):
             return {"success": False, "lookId": None, "error": "Missing required fields"}
+        
+        # -- userId format validation
+        if not re.match(r'^[a-zA-Z0-9_-]{1,64}$', user_id):
+            return {"success": False, "lookId": None, "error": "Invalid userId format"}
 
         if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
             return {"success": False, "lookId": None, "error": "Invalid coordinates"}

@@ -2,6 +2,7 @@ import os
 import time
 import json
 import boto3
+import re
 
 EXCHANGES_TABLE   = os.environ["EXCHANGES_TABLE"]
 SIGNALS_TABLE     = os.environ["SIGNALS_TABLE"]
@@ -24,6 +25,10 @@ def handler(event, context):
         args        = event.get("arguments", {})
         exchange_id = args.get("exchangeId")
         driver2_id  = args.get("userId")
+
+        # -- userId format validation
+        if not re.match(r'^[a-zA-Z0-9_-]{1,64}$', driver2_id):
+            return {"success": False, "lookId": None, "error": "Invalid userId format"}
 
         if not all([exchange_id, driver2_id]):
             return {"success": False, "error": "Missing required fields"}
