@@ -443,7 +443,7 @@ resource "aws_lambda_permission" "radius_matcher_invoke_notifier" {
 }
 
 module "waf" {
-  source = "git::https://github.com/apar-car/aparcar-infra.git//modules/waf?ref=1e1423fdb749a164ed30156372fdc98d5c98ed47"
+  source = "../../modules/waf"
 
   environment     = "dev"
   project         = "aparcar"
